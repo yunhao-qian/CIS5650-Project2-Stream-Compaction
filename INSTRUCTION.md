@@ -1,7 +1,7 @@
 Project 2 Stream Compaction Instructions
 ========================
 
-This is due **Tuesday, September 19 2023 at midnight**.
+This is due **Tuesday, September 17 2024 at 11:59pm**.
 
 **Summary:** In this project, you'll implement GPU stream compaction in CUDA,
 from scratch. This algorithm is widely used, and will be important for
@@ -170,12 +170,14 @@ It's all about some index calculation hacks.
 If you don't run into the slower gpu approach.
 Congratulations! You are way ahead and you earn this extra credit automatically.
 
-## Part 6: Radix Sort (Extra Credit) (+10)
+## Part 6: Extra Credit
+
+### Extra Credit 1: Radix Sort (+10)
 
 Add an additional module to the `stream_compaction` subproject. Implement radix
 sort using one of your scan implementations. Add tests to check its correctness.
 
-## Part 7: GPU Scan Using Shared Memory && Hardware Optimization(Extra Credit) (+10)
+### Extra Credit 2: GPU Scan Using Shared Memory && Hardware Optimization(Extra Credit) (+10)
 
 Implement [GPU Gem Ch 39](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html) Example 39.1, 39.2.
 
@@ -183,7 +185,7 @@ Notice that the size of the shared memory is dynamic and related to the block si
 
 Besides we can optimize the efficiency by changing our memory access pattern to avoid bank conflicts. See [GPU Gem Ch 39](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html) Section 39.2.3. This hasn't been covered in the course but we encourage you to challenge yourself.
 
-## Write-up
+## Part 7: Write-up
 
 1. Update all of the TODOs at the top of your `README.md`.
 2. Add a description of this project including a list of its features.
