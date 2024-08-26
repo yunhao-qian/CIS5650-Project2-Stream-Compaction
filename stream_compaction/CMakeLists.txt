@@ -20,4 +20,4 @@ list(SORT sources)
 source_group(Headers FILES ${headers})
 source_group(Sources FILES ${sources})
 
-cuda_add_library(stream_compaction ${sources} ${headers})
+add_library(stream_compaction ${sources} ${headers})

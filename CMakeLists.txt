@@ -1,9 +1,7 @@
-cmake_minimum_required(VERSION 3.1)
-project(cis565_stream_compaction_test)
+cmake_minimum_required(VERSION 3.18)
+project(cis5650_stream_compaction_test LANGUAGES CUDA CXX)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -11,6 +9,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Enable C++11 for host code
 set(CMAKE_CXX_STANDARD 11)
+if(NOT DEFINED CMAKE_CUDA_STANDARD)
+    set(CMAKE_CUDA_STANDARD 11)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+endif()
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -19,21 +21,9 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-########################################
-# CUDA Setup
-########################################
-find_package(CUDA 10 REQUIRED)
-include(${CMAKE_MODULE_PATH}/CUDAComputesList.cmake)
-
-list(APPEND CUDA_NVCC_FLAGS ${CUDA_GENERATE_CODE})
-list(APPEND CUDA_NVCC_FLAGS_DEBUG "-g -G")
-set(CUDA_VERBOSE_BUILD ON)
-
-if(WIN32)
-    # Set up include and lib paths
-    set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER} CACHE FILEPATH "Host side compiler used by NVCC" FORCE)
-endif(WIN32)
-########################################
+if(UNIX)
+    include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+endif(UNIX)
 
 add_subdirectory(stream_compaction)
 
@@ -53,6 +43,15 @@ list(SORT sources)
 source_group(Headers FILES ${headers})
 source_group(Sources FILES ${sources})
 
-cuda_add_executable(${CMAKE_PROJECT_NAME} ${sources} ${headers})
-
+add_executable(${CMAKE_PROJECT_NAME} ${sources} ${headers})
 target_link_libraries(${CMAKE_PROJECT_NAME} stream_compaction)
+if(CMAKE_VERSION VERSION_LESS "3.23.0")
+    set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES OFF)
+elseif(CMAKE_VERSION VERSION_LESS "3.24.0")
+    set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES all-major)
+else()
+    set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES native)
+endif()
+target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE "$<$<AND:$<CONFIG:Debug,RelWithDebInfo>,$<COMPILE_LANGUAGE:CUDA>>:-G>")
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${CMAKE_PROJECT_NAME})
+
