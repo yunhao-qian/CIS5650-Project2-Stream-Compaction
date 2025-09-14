@@ -1,5 +1,6 @@
 BasedOnStyle: LLVM
 
+BreakTemplateDeclarations: Yes
 ColumnLimit: 100
 FixNamespaceComments: false
 IndentWidth: 4

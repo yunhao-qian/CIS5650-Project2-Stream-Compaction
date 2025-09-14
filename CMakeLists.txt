@@ -44,3 +44,6 @@ source_group(Sources FILES ${sources})
 add_executable(${CMAKE_PROJECT_NAME} ${sources} ${headers})
 target_link_libraries(${CMAKE_PROJECT_NAME} stream_compaction)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${CMAKE_PROJECT_NAME})
+
+add_executable(tune_block_sizes src/tune_block_sizes.cpp ${headers})
+target_link_libraries(tune_block_sizes stream_compaction)

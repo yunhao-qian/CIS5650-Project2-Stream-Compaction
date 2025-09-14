@@ -32,7 +32,7 @@ namespace StreamCompaction {
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
-        void scan(int n, int *odata, const int *idata) {
+        void scan(int n, int *odata, const int *idata, const int blockSize) {
             const auto dataSize = n * sizeof(int);
 
             int *dev_iData;
@@ -42,7 +42,6 @@ namespace StreamCompaction {
             cudaMalloc((void **)&dev_oData, dataSize);
 
             timer().startGpuTimer();
-            const int blockSize = 256;
             const int gridSize = (n + blockSize - 1) / blockSize;
             for (int offset = 1; offset < n; offset *= 2) {
                 kernScan<<<gridSize, blockSize>>>(n, offset, dev_oData, dev_iData);

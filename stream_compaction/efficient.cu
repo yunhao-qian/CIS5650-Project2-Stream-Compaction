@@ -13,11 +13,13 @@ namespace StreamCompaction {
         }
 
         __global__ void kernUpSweep(int n, int offset, int *data) {
-            int index = blockIdx.x * blockDim.x + threadIdx.x;
-            index = (index + 1) * offset * 2 - 1;
-            if (index >= n) {
+            // Avoid integer overflows.
+            auto indexLL = static_cast<long long>(blockIdx.x) * blockDim.x + threadIdx.x;
+            indexLL = (indexLL + 1) * offset * 2 - 1;
+            if (indexLL >= n) {
                 return;
             }
+            int index = static_cast<int>(indexLL);
             int beforeIndex = index - offset;
             if (beforeIndex >= 0) {
                 data[index] += data[beforeIndex];
@@ -25,11 +27,13 @@ namespace StreamCompaction {
         }
 
         __global__ void kernDownSweep(int n, int offset, int *data) {
-            int index = blockIdx.x * blockDim.x + threadIdx.x;
-            index = (index + 1) * offset * 2 - 1;
-            if (index >= n) {
+            // Avoid integer overflows.
+            auto indexLL = static_cast<long long>(blockIdx.x) * blockDim.x + threadIdx.x;
+            indexLL = (indexLL + 1) * offset * 2 - 1;
+            if (indexLL >= n) {
                 return;
             }
+            int index = static_cast<int>(indexLL);
             int beforeIndex = index - offset;
             if (beforeIndex >= 0) {
                 int beforeValue = data[beforeIndex];
@@ -38,11 +42,11 @@ namespace StreamCompaction {
             }
         }
 
-        void scanImpl(int n, int *data) {
-            const int blockSize = 256;
+        void scanImpl(int n, int *data, const int blockSize) {
             const auto computeGridSize = [=](int offset) {
-                const int divisor = 2 * offset * blockSize;
-                return (n + divisor - 1) / divisor;
+                // Avoid integer overflows when n and blockSize are large.
+                const auto divisor = 2LL * offset * blockSize;
+                return static_cast<int>((n + divisor - 1) / divisor);
             };
 
             // Up-sweep
@@ -62,7 +66,7 @@ namespace StreamCompaction {
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
-        void scan(int n, int *odata, const int *idata) {
+        void scan(int n, int *odata, const int *idata, const int blockSize) {
             const auto dataSize = n * sizeof(int);
             const int ceiledN = 1 << ilog2ceil(n);
             const auto ceiledDataSize = ceiledN * sizeof(int);
@@ -75,7 +79,7 @@ namespace StreamCompaction {
             }
 
             timer().startGpuTimer();
-            scanImpl(ceiledN, dev_data);
+            scanImpl(ceiledN, dev_data, blockSize);
             timer().endGpuTimer();
 
             cudaMemcpy(odata, dev_data, dataSize, cudaMemcpyDeviceToHost);
@@ -91,14 +95,12 @@ namespace StreamCompaction {
          * @param idata  The array of elements to compact.
          * @returns      The number of elements remaining after compaction.
          */
-        int compact(int n, int *odata, const int *idata) {
+        int compact(int n, int *odata, const int *idata, const int blockSize) {
             const auto dataSize = n * sizeof(int);
             const int ceiledN = 1 << ilog2ceil(n);
             const auto ceiledDataSize = ceiledN * sizeof(int);
 
-            const int blockSize = 256;
             const int gridSize = (n + blockSize - 1) / blockSize;
-            const int ceiledGridSize = (ceiledN + blockSize - 1) / blockSize;
 
             int *dev_iData;
             cudaMalloc((void **)&dev_iData, dataSize);
@@ -116,7 +118,7 @@ namespace StreamCompaction {
             if (ceiledDataSize > dataSize) {
                 cudaMemset(dev_indices + n, 0, ceiledDataSize - dataSize);
             }
-            scanImpl(ceiledN, dev_indices);
+            scanImpl(ceiledN, dev_indices, blockSize);
             Common::kernScatter<<<gridSize, blockSize>>>(n, dev_oData, dev_iData, dev_bools,
                                                          dev_indices);
             timer().endGpuTimer();
