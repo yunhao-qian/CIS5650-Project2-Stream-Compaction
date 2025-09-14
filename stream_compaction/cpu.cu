@@ -11,6 +11,14 @@ namespace StreamCompaction {
             return timer;
         }
 
+        void scanImpl(int n, int *odata, const int *idata) {
+            int sum = 0;
+            for (int i = 0; i < n; ++i) {
+                odata[i] = sum;
+                sum += idata[i];
+            }
+        }
+
         /**
          * CPU scan (prefix sum).
          * For performance analysis, this is supposed to be a simple for loop.
@@ -19,11 +27,7 @@ namespace StreamCompaction {
          */
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            int sum = 0;
-            for (int i = 0; i < n; ++i) {
-                odata[i] = sum;
-                sum += idata[i];
-            }
+            scanImpl(n, odata, idata);
             timer().endCpuTimer();
         }
 
@@ -59,7 +63,7 @@ namespace StreamCompaction {
                 bools[i] = (idata[i] != 0) ? 1 : 0;
             }
             // Step 2: scan
-            scan(n, indices, bools);
+            scanImpl(n, indices, bools);
             // Step 3: scatter
             int oCount = 0;
             for (int i = 0; i < n; ++i) {
