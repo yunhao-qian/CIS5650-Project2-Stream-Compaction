@@ -22,8 +22,8 @@ void prepareData(int n) {
 
 template <bool IsGpu, typename Timer, typename Func>
 float measureTime(Timer &timer, Func func, int n) {
-    const int warmup = 1;
-    const int iterations = 10;
+    const int warmup = 0;
+    const int iterations = 1;
     for (int i = 0; i < warmup; i++) {
         prepareData(n);
         func();
@@ -44,7 +44,7 @@ float measureTime(Timer &timer, Func func, int n) {
 }
 
 int main() {
-    std::ofstream outFile("performance_comparison.nljson");
+    std::ofstream outFile("performance_comparison.nljson", std::ios::app);
 
     for (int exponent = 4; exponent <= 27; ++exponent) {
         const int baseN = 1 << exponent;
