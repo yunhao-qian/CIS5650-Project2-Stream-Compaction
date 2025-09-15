@@ -20,14 +20,12 @@ This project implements stream compaction and its building blocks (map, scan, sc
 - A CPU implementation of scan and stream compaction
 - GPU implementations of scan, using both naive and work-efficient methods
 - A GPU implementation of stream compaction based on the work-efficient scan
+- C++ and Python scripts used to automate performance measurement accurately and programmatically
 - Performance analysis comparing the different methods
 
 ### Changes to `CMakeLists.txt`
 
-Two additional executables are added to the project to assist certain tasks:
-
-- `tune_block_sizes.exe`: Runs each algorithm under a range of block sizes to find the optimal block size.
-- `compare_performance.exe`: Executes different scan implementations across a range of input sizes and records their execution times for plotting.
+An additional executable,`measure_time.exe`, has been added to the project to support block size tuning, performance benchmarking, and profiling.
 
 ### Changes to Function Signatures
 
@@ -35,9 +33,9 @@ To simplify block size tuning, I added an optional `blockSize` parameter to the 
 
 - `Naive::scan(..., const int blockSize = 256)`
 - `Efficient::scan(..., const int blockSize = 128)`
-- `Efficient::compact(..., const int blockSize = 512)`
+- `Efficient::compact(..., const int blockSize = 128)`
 
-These parameters are used only by `tune_block_sizes.exe` and do not affect existing calls.
+These parameters are used only by `measure_time.exe` and do not affect existing calls.
 
 ## Part 1: CPU Scan & Stream Compaction
 
@@ -109,6 +107,17 @@ Project description: see the [Features](#features) section at the top.
 
 ### Performance Analysis
 
+#### `measure_time.exe`
+
+To simplify performance analysis, I added a C++ executable, `measure_time.exe`. The implementation is in [`measure_time.cpp`](src/measure_time.cpp), which:
+
+- Accepts the operation (scan or compact), implementation (CPU, GPU naive, GPU work-efficient, or GPU Thrust), input size, and block size as command-line arguments.
+- Generates random input data and prints the measured execution time (in milliseconds) to the console.
+
+I created this tool because measuring a configuration only once is often imprecise. In my earlier attempts, running repeated measurements within a C++ loop caused the results to drift significantly. In particular, Thrust measurements became unexpectedly slower, sometimes even slower than the GPU naive implementation. I suspect this was due to frequent GPU memory allocations and deallocations (since the exposed API uses CPU inputs and outputs), which created an atypical workload and put the driver in a degraded performance state.
+
+To avoid this issue, I designed `measure_time.exe` to test only a single configuration with one iteration per program launch. Repeated measurements are instead automated by accompanying Python scripts.
+
 #### Optimizing Block Sizes
 
 To optimize block sizes, I added an optional `blockSize` parameter to every top-level function, each with a tuned default value. This preserves backward compatibility while making block-size tuning easier.
@@ -123,8 +132,7 @@ I also added a new executable, `tune_block_sizes.exe`, to the CMake project. In 
 Based on these experiments, the chosen defaults are:
 
 - 256 for the naive scan
-- 128 for the work-efficient scan
-- 512 for the work-efficient compaction
+- 128 for the work-efficient scan and compaction
 
 #### Performance Comparison
 
@@ -154,7 +162,7 @@ Methods:
     - For small $N$, execution time is dominated by kernel launch overhead. Since Thrust minimizes this to just two launches, it performs well in this regime.  
     - For large $N$, Thrust likely employs shared memory optimizations. The cause of its relative slowness compared to my implementation requires further investigation.
 
-#### Test Results
+#### Outputs of `cis5650_stream_compaction_test.exe`
 
 ```text
 ****************
@@ -210,4 +218,74 @@ Methods:
    elapsed time: 0.576384ms    (CUDA Measured)
     passed 
 Press any key to continue . . . 
+```
+
+#### Outputs of `tune_block_sizes.py`
+
+```text
+Naive scan, power-of-two
+Block size: 8, time: 6.231833506 ms
+Block size: 16, time: 3.173327995 ms
+Block size: 32, time: 1.6745983839999998 ms
+Block size: 64, time: 0.8986879886000001 ms
+Block size: 128, time: 0.5220288008999999 ms
+Block size: 256, time: 0.3854463994 ms
+Block size: 512, time: 0.4322271972999999 ms
+Block size: 1024, time: 0.4435839981 ms
+Optimal block size: 256, time: 0.3854463994 ms
+========================================
+Naive scan, non-power-of-two
+Block size: 8, time: 6.219187259 ms
+Block size: 16, time: 3.18726716 ms
+Block size: 32, time: 1.658544017 ms
+Block size: 64, time: 0.8911647916 ms
+Block size: 128, time: 0.5024224044000001 ms
+Block size: 256, time: 0.3580832005 ms
+Block size: 512, time: 0.3581887961 ms
+Block size: 1024, time: 0.4385919958000001 ms
+Optimal block size: 256, time: 0.3580832005 ms
+========================================
+Work-efficient scan, power-of-two
+Block size: 8, time: 0.8682271958 ms
+Block size: 16, time: 0.6581280051999999 ms
+Block size: 32, time: 0.5843007983 ms
+Block size: 64, time: 0.511523199 ms
+Block size: 128, time: 0.47026240229999994 ms
+Block size: 256, time: 0.5074463992 ms
+Block size: 512, time: 0.48191359920000004 ms
+Block size: 1024, time: 0.4813536018 ms
+Optimal block size: 128, time: 0.47026240229999994 ms
+========================================
+Work-efficient scan, non-power-of-two
+Block size: 8, time: 0.8395776093 ms
+Block size: 16, time: 0.6402047992 ms
+Block size: 32, time: 0.5541888057000001 ms
+Block size: 64, time: 0.5040127992000001 ms
+Block size: 128, time: 0.4989087999 ms
+Block size: 256, time: 0.5251072078000001 ms
+Block size: 512, time: 0.48322560189999997 ms
+Block size: 1024, time: 0.49256000219999996 ms
+Optimal block size: 512, time: 0.48322560189999997 ms
+========================================
+Work-efficient compact, power-of-two
+Block size: 8, time: 1.4116608029999997 ms
+Block size: 16, time: 0.9503391928000001 ms
+Block size: 32, time: 0.7004479884 ms
+Block size: 64, time: 0.5998431921 ms
+Block size: 128, time: 0.5244000018 ms
+Block size: 256, time: 0.5620128065000001 ms
+Block size: 512, time: 0.7700480073 ms
+Block size: 1024, time: 0.6348639965 ms
+Optimal block size: 128, time: 0.5244000018 ms
+========================================
+Work-efficient compact, non-power-of-two
+Block size: 8, time: 1.40685439 ms
+Block size: 16, time: 0.9263231993 ms
+Block size: 32, time: 0.7410848021000002 ms
+Block size: 64, time: 0.7034976004999999 ms
+Block size: 128, time: 0.7220223933 ms
+Block size: 256, time: 0.7788672031 ms
+Block size: 512, time: 0.7625663994 ms
+Block size: 1024, time: 0.7747167944 ms
+Optimal block size: 64, time: 0.7034976004999999 ms
 ```
