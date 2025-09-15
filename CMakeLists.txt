@@ -47,3 +47,6 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT $
 
 add_executable(tune_block_sizes src/tune_block_sizes.cpp ${headers})
 target_link_libraries(tune_block_sizes stream_compaction)
+
+add_executable(compare_performance src/compare_performance.cpp ${headers})
+target_link_libraries(compare_performance stream_compaction)
