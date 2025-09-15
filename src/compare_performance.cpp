@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iostream>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -10,7 +11,7 @@
 
 #include "testing_helpers.hpp"
 
-constexpr int MAX_SIZE = 1 << 24;
+constexpr int MAX_SIZE = 1 << 27;
 std::vector<int> inputs(MAX_SIZE);
 std::vector<int> outputs(MAX_SIZE);
 
@@ -21,11 +22,12 @@ void prepareData(int n) {
 
 template <bool IsGpu, typename Timer, typename Func>
 float measureTime(Timer &timer, Func func, int n) {
-    const int warmup = 5;
-    const int iterations = 20;
+    const int warmup = 1;
+    const int iterations = 10;
     for (int i = 0; i < warmup; i++) {
         prepareData(n);
         func();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     float totalTime = 0.0f;
     for (int i = 0; i < iterations; ++i) {
@@ -36,6 +38,7 @@ float measureTime(Timer &timer, Func func, int n) {
         } else {
             totalTime += timer.getCpuElapsedTimeForPreviousOperation();
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     return totalTime / iterations;
 }
@@ -43,7 +46,7 @@ float measureTime(Timer &timer, Func func, int n) {
 int main() {
     std::ofstream outFile("performance_comparison.nljson");
 
-    for (int exponent = 4; exponent <= 24; ++exponent) {
+    for (int exponent = 4; exponent <= 27; ++exponent) {
         const int baseN = 1 << exponent;
         for (int n : {baseN - 3, baseN}) {
             float cpuTime = measureTime<false>(
@@ -70,6 +73,7 @@ int main() {
                         << "\"method\": \"" << name << "\", "
                         << "\"time\": " << time << " }" << std::endl;
             }
+            std::cout << "Completed n = " << n << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }

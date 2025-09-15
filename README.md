@@ -133,7 +133,7 @@ Based on these experiments, the chosen defaults are:
 Methods:
 
 - **Input sizes:** The figure above compares all scan implementations across a range of input sizes. I use pairs of input sizes $2^n$ and $2^n - 3$, and confirm that each pair shows similar performance, while power-of-two input sizes are sometimes marginally faster. The following discussion therefore considers only the range of data sizes, without distinguishing between power-of-two and non-power-of-two inputs.
-- **Data collection:** To simplify data collection for this plot, I added `compare_performance.exe` to the CMake project. In [`compare_performance.cpp`](src/compare_performance.cpp), it measures the average execution time (5 warmup runs and 20 measured runs) for each configuration and writes the results to a newline-delimited JSON file ([`performance_comparison.nljson`](scripts/performance_comparison.nljson)). Then [`plot_performance_comparison.py`](scripts/plot_performance_comparison.py) reads the JSON data and generates the plot.
+- **Data collection:** To simplify data collection for this plot, I added `compare_performance.exe` to the CMake project. In [`compare_performance.cpp`](src/compare_performance.cpp), it measures the average execution time (1 warmup runs and 10 measured runs) for each configuration and writes the results to a newline-delimited JSON file ([`performance_comparison.nljson`](scripts/performance_comparison.nljson)). Then [`plot_performance_comparison.py`](scripts/plot_performance_comparison.py) reads the JSON data and generates the plot.
 - **Plotting:** Because the input sizes are log-spaced and execution time grows rapidly for larger inputs, I used logarithmic scales on both axes of the plot.
 
 ### Observation and Analysis
