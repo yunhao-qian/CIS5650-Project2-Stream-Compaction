@@ -120,47 +120,76 @@ To avoid this issue, I designed `measure_time.exe` to test only a single configu
 
 #### Optimizing Block Sizes
 
-To optimize block sizes, I added an optional `blockSize` parameter to every top-level function, each with a tuned default value. This preserves backward compatibility while making block-size tuning easier.
+To optimize block sizes, I developed a Python script, [`tune_block_sizes.py`](scripts/tune_block_sizes.py). This script uses the previously described `measure_time.exe` to benchmark execution time across a range of block sizes and identify the configuration that minimizes runtime. Key details of the procedure are:
 
-I also added a new executable, `tune_block_sizes.exe`, to the CMake project. In [`tune_block_sizes.cpp`](src/tune_block_sizes.cpp), it searches for the optimal block size for each algorithm by:
+- Because optimal block sizes vary with input size, tests are conducted on a fixed scale of $2^{22}$, using both a power-of-two input ($2^{22}$) and a non-power-of-two input ($2^{22} - 3$).
+- Block sizes are sampled over a log-spaced range: 8, 16, …, 512, 1024.
+- Each configuration is executed 10 times, with the mean runtime recorded.
+- The final selection balances performance across both power-of-two and non-power-of-two cases.
 
-- Using arrays of randomly generated test data. Since the optimal block size can vary significantly with input sizes, experiments are run on a fixed scale of $2^22$, with both power-of-two ($2^22$) and non-power-of-two $2^22 - 3$ sizes.
-- Testing a log-spaced range of block sizes: 8, 16, …, 512, 1024.
-- Measuring performance with precise timing: each configuration is warmed up with 10 runs, then measured over 100 runs, and the average elapsed GPU time is recorded.
-- Reporting results and selecting the block size that balances performance across both power-of-two and non-power-of-two inputs.
-
-Based on these experiments, the chosen defaults are:
+From these experiments, the chosen defaults are:
 
 - 256 for the naive scan
 - 128 for the work-efficient scan and compaction
 
 #### Performance Comparison
 
+To systematically collect execution time data across many configurations, I created a Python script, [`measure_performance.py`](scripts/measure_performance.py). This script relies on the previously described `measure_time.exe` to benchmark runtime across a range of input sizes and implementations. The procedure is as follows:
+
+- Input sizes are tested from $2^4$ up to $2^{27}$, using both exact powers of two and non-powers of two ($2^i - 3$ for each $i$) to capture different performance behaviors.
+- The tuned block sizes from earlier experiments are applied.
+- Each configuration is executed 50 times, and the mean runtime is recorded.
+- Results are stored in a JSON file ([`performance.json`](scripts/performance.json)).
+
+The JSON data is then processed by another script, [`plot_performance.py`](scripts/plot_performance.py), which generates the figures shown in this report.
+
+The first figure presents the full dataset:
+
 ![performance comparison](img/performance-comparison.png)
 
-Methods:
+Because non-power-of-two inputs produce jagged trends, and CPU performance scales on a very different range than GPU performance, a second figure was generated using only GPU data and power-of-two inputs:
 
-- **Input sizes:** The figure above compares all scan implementations across a range of input sizes. I use pairs of input sizes $2^n$ and $2^n - 3$, and confirm that each pair shows similar performance, while power-of-two input sizes are sometimes marginally faster. The following discussion therefore considers only the range of data sizes, without distinguishing between power-of-two and non-power-of-two inputs.
-- **Data collection:** To simplify data collection for this plot, I added `compare_performance.exe` to the CMake project. In [`compare_performance.cpp`](src/compare_performance.cpp), it measures the average execution time (1 warmup runs and 10 measured runs) for each configuration and writes the results to a newline-delimited JSON file ([`performance_comparison.nljson`](scripts/performance_comparison.nljson)). Then [`plot_performance_comparison.py`](scripts/plot_performance_comparison.py) reads the JSON data and generates the plot.
-- **Plotting:** Because the input sizes are log-spaced and execution time grows rapidly for larger inputs, I used logarithmic scales on both axes of the plot.
+![performance comparison GPU-only](img/performance-comparison-gpu-only.png)
 
 ### Observation and Analysis
 
-- The CPU implementation has $O(N)$ complexity in theory, which is confirmed by the linear trend in the log-log plot. Interestingly, this simple, low-overhead method outperforms the GPU implementations (naive, work-efficient, and Thrust) across a fairly wide range of input sizes (up to about 300,000).
-- My naive and work-efficient GPU implementations behave as follows:
-  - They are not very sensitive to input size until $N$ becomes very large (around $10^6$). This is likely because launching kernels $O(\log N)$ times dominates execution time, while the amount of work per kernel remains relatively small.
-  - Beyond $10^6$, the actual work performed inside each kernel becomes a larger portion of execution time, and execution time increases significantly with $N$.
-- Comparing naive and work-efficient GPU implementations:
-  - The naive method is faster when $N < 10^6$, again because of kernel launch overhead. Although work-efficient performs only $O(N)$ total work versus $O(N \log N)$, it requires both an up-sweep and a down-sweep, doubling the number of kernel launches.
-  - For $N > 10^6$, the advantage of the work-efficient method becomes clear, and it outperforms the naive version.
-- The Thrust library shows a different performance profile:
-  - Plot observation: When $N < 10^5$, the Thrust implementation is significantly faster than my naive and work-efficient versions, though still slower than the CPU implementation. However, for larger $N$, Thrust unexpectedly runs slower than my global-memory–only work-efficient implementation.
-  - Nsight Systems observation: Each call to `thrust::exclusive_scan()` generates only two kernels:
-    - `DeviceScanInitKernel`, which is short-lived,
-    - `DeviceScanKernel`, which dominates execution time.
-  - Analysis:
-    - For small $N$, execution time is dominated by kernel launch overhead. Since Thrust minimizes this to just two launches, it performs well in this regime.  
-    - For large $N$, Thrust likely employs shared memory optimizations. The cause of its relative slowness compared to my implementation requires further investigation.
+#### CPU Implementation
+
+The minimal for-loop CPU implementation consistently demonstrates $O(N)$ complexity across all tested input sizes, as confirmed by the linear trend in the log-log plot. This complexity holds regardless of whether the limiting factor is compute or memory. Regarding the bottleneck:
+
+- The compute workload is very light, since addition operations are fast.
+- The memory access pattern is highly favorable, as all reads and writes are sequential.
+
+Although memory is typically slower than arithmetic operations—suggesting the implementation may be slightly memory-bound—the distinction is not critical here.
+
+Importantly, this simple, low-overhead implementation outperforms the GPU variants (naive, work-efficient, and Thrust) for inputs up to about $2^{17}$. The likely reason is the absence of GPU kernel launch overhead, which allows the CPU to handle small and mid-sized inputs more efficiently.
+
+#### Naive & Work-Efficient GPU Implementations
+
+Common characteristics:
+
+- For $N < 2^{20}$, both implementations show limited sensitivity to input size. In fact, runtime sometimes decreases as $N$ grows. This is likely because the $O(\log N)$ kernel launches dominate execution time, while the work per kernel remains relatively small. Additionally, the input sizes may be too small to fully utilize GPU resources. In this regime, the bottleneck is neither compute nor memory, but the overhead of repeated kernel launches.
+- Beyond $2^{20}$, execution time increases rapidly with $N$, indicating saturation of a GPU resource. Given that both implementations rely heavily on global memory, the performance bottleneck is most likely memory I/O rather than computation.
+
+Comparison of the two:
+
+- For $N < 2^{21}$, the so-called work-efficient implementation is actually slower than the naive version. This can be attributed to kernel launch overhead: the up-sweep and down-sweep phases double the number of kernel invocations. Although the total work is reduced, the benefit is negligible at these smaller sizes.
+- For larger $N$, the work-efficient method begins to outperform the naive implementation, and the gap widens quickly. This is because the work-efficient algorithm performs only $O(N)$ total operations, whereas the naive approach requires $O(N \log N)$.
+
+#### Thrust GPU Implementation
+
+To better understand the behavior of `thrust::exclusive_scan()`, I profiled it using Nsight Systems. The results revealed only two CUDA kernel calls:
+
+- `DeviceScanInitKernel`, which is short-lived
+- `DeviceScanKernel`, which dominates execution time
+
+This suggests that Thrust fuses the entire scan into just two kernels. While the internal algorithm is not directly visible, it is reasonable to assume that it leverages shared memory and optimized memory access patterns.
+
+The performance profile of Thrust’s `exclusive_scan` is notable:
+
+- Small sizes ($N \leq 2^{17}$): Runtime remains relatively flat across input sizes. Although slower than the CPU implementation, it is still much faster than the naive and work-efficient GPU versions, likely due to the minimal number of kernel launches.
+- Mid sizes ($2^{18} \leq N \leq 2^{23}$): Runtime unexpectedly spikes, at times even performing worse than the naive implementation. It seems unlikely that NVIDIA’s official library would be poorly optimized, especially since this anomaly does not appear for other people. I suspect the performance degradation is related to the measurement methodology: repeatedly allocating memory, copying data CPU → GPU, launching kernels, copying results GPU → CPU, and freeing memory. This atypical workflow may interact with the driver in unusual ways. This remains a hypothesis and warrants further investigation.
+- Large sizes ($N > 2^{23}$): Thrust significantly outperforms the other implementations, presumably because its internal use of shared memory and optimized access patterns scales effectively at large input sizes.
 
 #### Outputs of `cis5650_stream_compaction_test.exe`
 
@@ -175,25 +204,25 @@ Methods:
 ==== cpu scan, non-power-of-two ====
    elapsed time: 1.5015ms    (std::chrono Measured)
     [   0  16  51  59  80 126 152 171 171 213 256 265 310 ... 102780200 102780221 ]
-    passed 
+    passed
 ==== naive scan, power-of-two ====
    elapsed time: 0.376736ms    (CUDA Measured)
-    passed 
+    passed
 ==== naive scan, non-power-of-two ====
    elapsed time: 0.326432ms    (CUDA Measured)
-    passed 
+    passed
 ==== work-efficient scan, power-of-two ====
    elapsed time: 0.41936ms    (CUDA Measured)
-    passed 
+    passed
 ==== work-efficient scan, non-power-of-two ====
    elapsed time: 0.41024ms    (CUDA Measured)
-    passed 
+    passed
 ==== thrust scan, power-of-two ====
    elapsed time: 0.3416ms    (CUDA Measured)
-    passed 
+    passed
 ==== thrust scan, non-power-of-two ====
    elapsed time: 0.333088ms    (CUDA Measured)
-    passed 
+    passed
 
 *****************************
 ** STREAM COMPACTION TESTS **
@@ -202,22 +231,22 @@ Methods:
 ==== cpu compact without scan, power-of-two ====
    elapsed time: 7.3473ms    (std::chrono Measured)
     [   1   2   3   2   2   1   2   2   3   3   3   3   2 ...   3   2 ]
-    passed 
+    passed
 ==== cpu compact without scan, non-power-of-two ====
    elapsed time: 7.2214ms    (std::chrono Measured)
     [   1   2   3   2   2   1   2   2   3   3   3   3   2 ...   1   1 ]
-    passed 
+    passed
 ==== cpu compact with scan ====
    elapsed time: 14.0601ms    (std::chrono Measured)
     [   1   2   3   2   2   1   2   2   3   3   3   3   2 ...   3   2 ]
-    passed 
+    passed
 ==== work-efficient compact, power-of-two ====
    elapsed time: 0.431744ms    (CUDA Measured)
-    passed 
+    passed
 ==== work-efficient compact, non-power-of-two ====
    elapsed time: 0.576384ms    (CUDA Measured)
-    passed 
-Press any key to continue . . . 
+    passed
+Press any key to continue . . .
 ```
 
 #### Outputs of `tune_block_sizes.py`
