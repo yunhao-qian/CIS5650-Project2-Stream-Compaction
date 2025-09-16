@@ -10,6 +10,7 @@
 #include <stream_compaction/cpu.h>
 #include <stream_compaction/naive.h>
 #include <stream_compaction/efficient.h>
+#include <stream_compaction/efficient_plus.h>
 #include <stream_compaction/thrust.h>
 #include "testing_helpers.hpp"
 
@@ -78,6 +79,20 @@ int main(int argc, char* argv[]) {
     printDesc("work-efficient scan, non-power-of-two");
     StreamCompaction::Efficient::scan(NPOT, c, a);
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    //printArray(NPOT, c, true);
+    printCmpResult(NPOT, b, c);
+
+    zeroArray(SIZE, c);
+    printDesc("work-efficient plus scan, power-of-two");
+    StreamCompaction::EfficientPlus::scan(SIZE, c, a);
+    printElapsedTime(StreamCompaction::EfficientPlus::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    //printArray(SIZE, c, true);
+    printCmpResult(SIZE, b, c);
+
+    zeroArray(SIZE, c);
+    printDesc("work-efficient plus scan, non-power-of-two");
+    StreamCompaction::EfficientPlus::scan(NPOT, c, a);
+    printElapsedTime(StreamCompaction::EfficientPlus::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     //printArray(NPOT, c, true);
     printCmpResult(NPOT, b, c);
 

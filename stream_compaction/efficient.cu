@@ -77,6 +77,7 @@ namespace StreamCompaction {
             if (ceiledDataSize > dataSize) {
                 cudaMemset(dev_data + n, 0, ceiledDataSize - dataSize);
             }
+            cudaDeviceSynchronize();
 
             timer().startGpuTimer();
             scanImpl(ceiledN, dev_data, blockSize);
@@ -111,6 +112,7 @@ namespace StreamCompaction {
             cudaMalloc((void **)&dev_indices, ceiledDataSize);
             int *dev_oData;
             cudaMalloc((void **)&dev_oData, dataSize);
+            cudaDeviceSynchronize();
 
             timer().startGpuTimer();
             Common::kernMapToBoolean<<<gridSize, blockSize>>>(n, dev_bools, dev_iData);

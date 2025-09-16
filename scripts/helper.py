@@ -12,6 +12,7 @@ def measure_time(
     implementation: Literal["cpu", "naive", "efficient", "thrust"],
     input_size: int,
     block_size: int = -1,
+    elements_per_thread: int = -1,
 ) -> float:
     result = subprocess.run(
         [
@@ -20,6 +21,7 @@ def measure_time(
             implementation,
             str(input_size),
             str(block_size),
+            str(elements_per_thread),
         ],
         capture_output=True,
         cwd=ROOT_DIR,

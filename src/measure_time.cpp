@@ -7,22 +7,25 @@
 
 #include <stream_compaction/cpu.h>
 #include <stream_compaction/efficient.h>
+#include <stream_compaction/efficient_plus.h>
 #include <stream_compaction/naive.h>
 #include <stream_compaction/thrust.h>
 
 int main(int argc, char *argv[]) {
     // argv[1]: scan/compact
-    // argv[2]: cpu/naive/efficient/thrust
+    // argv[2]: cpu/naive/efficient/efficient_plus/thrust
     // argv[3]: input size
     // argv[4]: block size
+    // argv[5]: elements per thread
 
-    if (argc != 5) {
+    if (argc != 6) {
         return -1;
     }
     const std::string operation(argv[1]);
     const std::string implementation(argv[2]);
     const int inputSize = std::stoi(argv[3]);
     const int blockSize = std::stoi(argv[4]);
+    const int elementsPerThread = std::stoi(argv[5]);
 
     std::vector<int> inputs(inputSize);
     std::vector<int> outputs(inputSize);
@@ -51,33 +54,57 @@ int main(int argc, char *argv[]) {
         timer = &StreamCompaction::Naive::timer();
     } else if (implementation == "efficient") {
         timer = &StreamCompaction::Efficient::timer();
+    } else if (implementation == "efficient_plus") {
+        timer = &StreamCompaction::EfficientPlus::timer();
     } else if (implementation == "thrust") {
         timer = &StreamCompaction::Thrust::timer();
     } else {
         return -1;
     }
 
-#define RUN_SCAN(scan)                                                                             \
-    do {                                                                                           \
-        if (blockSize >= 0) {                                                                      \
-            scan(inputSize, outputs.data(), inputs.data(), blockSize);                             \
-        } else {                                                                                   \
-            scan(inputSize, outputs.data(), inputs.data());                                        \
-        }                                                                                          \
-    } while (false)
-
     if (operation == "scan") {
         if (implementation == "cpu") {
-            if (blockSize >= 0) {
+            if (blockSize >= 0 || elementsPerThread >= 0) {
                 return -1;
             }
             StreamCompaction::CPU::scan(inputSize, outputs.data(), inputs.data());
         } else if (implementation == "naive") {
-            RUN_SCAN(StreamCompaction::Naive::scan);
-        } else if (implementation == "efficient") {
-            RUN_SCAN(StreamCompaction::Efficient::scan);
-        } else if (implementation == "thrust") {
+            if (elementsPerThread >= 0) {
+                return -1;
+            }
             if (blockSize >= 0) {
+                StreamCompaction::Naive::scan(inputSize, outputs.data(), inputs.data(), blockSize);
+            } else {
+                StreamCompaction::Naive::scan(inputSize, outputs.data(), inputs.data());
+            }
+        } else if (implementation == "efficient") {
+            if (elementsPerThread >= 0) {
+                return -1;
+            }
+            if (blockSize >= 0) {
+                StreamCompaction::Efficient::scan(inputSize, outputs.data(), inputs.data(),
+                                                  blockSize);
+            } else {
+                StreamCompaction::Efficient::scan(inputSize, outputs.data(), inputs.data());
+            }
+        } else if (implementation == "efficient_plus") {
+            if (blockSize >= 0) {
+                if (elementsPerThread >= 0) {
+                    StreamCompaction::EfficientPlus::scan(inputSize, outputs.data(), inputs.data(),
+                                                          blockSize, elementsPerThread);
+                } else {
+                    StreamCompaction::EfficientPlus::scan(inputSize, outputs.data(), inputs.data(),
+                                                          blockSize);
+                }
+            } else {
+                if (elementsPerThread >= 0) {
+                    return -1;
+                } else {
+                    StreamCompaction::EfficientPlus::scan(inputSize, outputs.data(), inputs.data());
+                }
+            }
+        } else if (implementation == "thrust") {
+            if (blockSize >= 0 || elementsPerThread >= 0) {
                 return -1;
             }
             StreamCompaction::Thrust::scan(inputSize, outputs.data(), inputs.data());
@@ -86,6 +113,9 @@ int main(int argc, char *argv[]) {
         }
     } else if (operation == "compact") {
         if (implementation == "efficient") {
+            if (elementsPerThread >= 0) {
+                return -1;
+            }
             if (blockSize >= 0) {
                 StreamCompaction::Efficient::compact(inputSize, outputs.data(), inputs.data(),
                                                      blockSize);

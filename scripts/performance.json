@@ -3,1152 +3,1440 @@
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 16,
-        "time": 0.00013399999751000004
+        "time": 0.00013499999770000005
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 13,
-        "time": 0.00013399999751000004
+        "time": 0.00012999999782500004
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 32,
-        "time": 0.00014399999769000005
+        "time": 0.00012499999687500004
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 29,
-        "time": 0.00012399999776000004
+        "time": 0.00014999999587500006
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 64,
-        "time": 0.00016799999795000006
+        "time": 0.00016499999695000008
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 61,
-        "time": 0.00014399999769000005
+        "time": 0.00014999999625000006
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 128,
-        "time": 0.00020399999919999996
+        "time": 0.00019499999835000004
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 125,
-        "time": 0.00019999999672000004
+        "time": 0.00021499999785000004
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 256,
-        "time": 0.00026600000066000017
+        "time": 0.00027500000065
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 253,
-        "time": 0.00026000000296000017
+        "time": 0.0002600000021
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 512,
-        "time": 0.00040800000540000027
+        "time": 0.00038000000780000003
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 509,
-        "time": 0.00043000000934000017
+        "time": 0.00037500000320000006
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 1024,
-        "time": 0.0005460000142200003
+        "time": 0.0005350000137000001
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 1021,
-        "time": 0.0005120000080000004
+        "time": 0.0004850000071000002
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 2048,
-        "time": 0.0009139999999599998
+        "time": 0.0009550000140000001
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 2045,
-        "time": 0.0009199999953
+        "time": 0.0010100000017500001
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 4096,
-        "time": 0.0018319999932
+        "time": 0.0017499999835000005
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 4093,
-        "time": 0.001818000007
+        "time": 0.0018949999810000003
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 8192,
-        "time": 0.0031719999760000004
+        "time": 0.0032299999740000003
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 8189,
-        "time": 0.0036460000050000008
+        "time": 0.0035950000285000006
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 16384,
-        "time": 0.006132000005399998
+        "time": 0.0069099999740000004
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 16381,
-        "time": 0.006530000018599998
+        "time": 0.006765000031
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 32768,
-        "time": 0.013030000077999999
+        "time": 0.013600000004999998
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 32765,
-        "time": 0.012843999998
+        "time": 0.012445000145000001
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 65536,
-        "time": 0.024660000025999995
+        "time": 0.024660000209999998
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 65533,
-        "time": 0.024692000040000002
+        "time": 0.025655000110000003
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 131072,
-        "time": 0.049760000112
+        "time": 0.05136500002000001
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 131069,
-        "time": 0.05221600010600001
+        "time": 0.04942499995499999
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 262144,
-        "time": 0.09884799972400003
+        "time": 0.10081499963999999
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 262141,
-        "time": 0.10065199955799999
+        "time": 0.10227499907
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 524288,
-        "time": 0.20549799946000002
+        "time": 0.1938549988
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 524285,
-        "time": 0.20485000044000004
+        "time": 0.2011999995
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 1048576,
-        "time": 0.42357599971999993
+        "time": 0.40868999955000007
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 1048573,
-        "time": 0.41611599870000004
+        "time": 0.39133500010000005
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 2097152,
-        "time": 0.81719600082
+        "time": 0.8199849933500001
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 2097149,
-        "time": 0.8289760076399999
+        "time": 0.7893050075
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 4194304,
-        "time": 1.629533999
+        "time": 1.6124799965
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 4194301,
-        "time": 1.6433319947999991
+        "time": 1.596660006
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 8388608,
-        "time": 3.3119099999999997
+        "time": 3.2063400279999996
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 8388605,
-        "time": 3.3281260059999993
+        "time": 3.1974000095000004
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 16777216,
-        "time": 6.674975996399996
+        "time": 6.3699350594999995
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 16777213,
-        "time": 6.6020460322000005
+        "time": 6.3922750945
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 33554432,
-        "time": 13.263512002
+        "time": 12.885499999999999
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 33554429,
-        "time": 13.00705996
+        "time": 12.795410069999999
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 67108864,
-        "time": 25.840299986
+        "time": 25.78205995999999
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 67108861,
-        "time": 26.256347926000004
+        "time": 25.497859955000003
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 134217728,
-        "time": 51.608635867999986
+        "time": 51.93368015
     },
     {
         "operation": "scan",
         "implementation": "cpu",
         "input_size": 134217725,
-        "time": 51.878906100000016
+        "time": 51.66594009500001
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 16,
-        "time": 0.10468288002999997
+        "time": 0.16401119895
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 13,
-        "time": 0.10244800059600002
+        "time": 0.18387360045
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 32,
-        "time": 0.09564543946600003
+        "time": 0.19719839914999998
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 29,
-        "time": 0.086759039908
+        "time": 0.18707199700000002
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 64,
-        "time": 0.08503615975599997
+        "time": 0.18124480025
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 61,
-        "time": 0.08515903995
+        "time": 0.18348800095
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 128,
-        "time": 0.093208320292
+        "time": 0.20097600225
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 125,
-        "time": 0.08978752031199999
+        "time": 0.19651520085000002
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 256,
-        "time": 0.10841727968600003
+        "time": 0.1882496007
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 253,
-        "time": 0.11328320036199997
+        "time": 0.21563679879999995
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 512,
-        "time": 0.16414976036200002
+        "time": 0.22416960000000002
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 509,
-        "time": 0.17227776071999998
+        "time": 0.23521119795
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 1024,
-        "time": 0.18811071917999997
+        "time": 0.2881263986
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 1021,
-        "time": 0.18431360133599997
+        "time": 0.2618991986
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 2048,
-        "time": 0.1751219194320001
+        "time": 0.28060479844999997
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 2045,
-        "time": 0.20718719963999999
+        "time": 0.3186256
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 4096,
-        "time": 0.18587519942800002
+        "time": 0.29793280065
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 4093,
-        "time": 0.14120640146000002
+        "time": 0.2858127974
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 8192,
-        "time": 0.16131712026
+        "time": 0.2783056006
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 8189,
-        "time": 0.14143487972000002
+        "time": 0.31333760094999996
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 16384,
-        "time": 0.16167488084000003
+        "time": 0.27792160135
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 16381,
-        "time": 0.16954496055999996
+        "time": 0.26275520185000006
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 32768,
-        "time": 0.17050239954
+        "time": 0.31217599965
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 32765,
-        "time": 0.16511167958
+        "time": 0.32082720099999995
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 65536,
-        "time": 0.17314112006
+        "time": 0.31117439945
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 65533,
-        "time": 0.18320064072
+        "time": 0.34776959564999993
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 131072,
-        "time": 0.18522943974
+        "time": 0.2986783997
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 131069,
-        "time": 0.18978751896000007
+        "time": 0.3328368001
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 262144,
-        "time": 0.19561919958
+        "time": 0.3467231996500001
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 262141,
-        "time": 0.19201919944000004
+        "time": 0.29102239995
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 524288,
-        "time": 0.19758655905999997
+        "time": 0.22644959979999996
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 524285,
-        "time": 0.17905664148
+        "time": 0.2564928009
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 1048576,
-        "time": 0.21790016056
+        "time": 0.21960640035
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 1048573,
-        "time": 0.21596543874
+        "time": 0.22530239974999997
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 2097152,
-        "time": 0.22327616003999995
+        "time": 0.23434879939999997
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 2097149,
-        "time": 0.22368128156
+        "time": 0.23003680044999997
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 4194304,
-        "time": 0.35920192246
+        "time": 0.36329439874999997
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 4194301,
-        "time": 0.37593151742
+        "time": 0.374454403
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 8388608,
-        "time": 0.61891520152
+        "time": 0.6091552049999999
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 8388605,
-        "time": 0.6245203185
+        "time": 0.6125775963499999
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 16777216,
-        "time": 3.7509158271999996
+        "time": 3.7415279984999996
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 16777213,
-        "time": 3.7513676785999994
+        "time": 3.7369183905
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 33554432,
-        "time": 7.882834567799998
+        "time": 7.877081584999999
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 33554429,
-        "time": 7.8752415847999995
+        "time": 7.883500790499999
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 67108864,
-        "time": 16.584320072
+        "time": 16.576712034999996
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 67108861,
-        "time": 16.579793858000002
+        "time": 16.583662320000002
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 134217728,
-        "time": 34.82950774999999
+        "time": 34.837626835
     },
     {
         "operation": "scan",
         "implementation": "naive",
         "input_size": 134217725,
-        "time": 34.834726484
+        "time": 34.83540154
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 16,
-        "time": 0.133242240114
+        "time": 0.19645759985000003
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 13,
-        "time": 0.12820223976800002
+        "time": 0.1961999997
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 32,
-        "time": 0.12959232009200003
+        "time": 0.19687680020000004
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 29,
-        "time": 0.137354879252
+        "time": 0.19475359914999998
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 64,
-        "time": 0.15639423966000002
+        "time": 0.19994239965000005
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 61,
-        "time": 0.1503372805000001
+        "time": 0.19930239845000003
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 128,
-        "time": 0.16702016036
+        "time": 0.2494751983
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 125,
-        "time": 0.15377279846
+        "time": 0.22474559995
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 256,
-        "time": 0.15919680126000005
+        "time": 0.246270398
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 253,
-        "time": 0.17823168207999998
+        "time": 0.24352000049999994
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 512,
-        "time": 0.16338559926000001
+        "time": 0.2749504
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 509,
-        "time": 0.15531455988
+        "time": 0.25827679940000003
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 1024,
-        "time": 0.16661951989999998
+        "time": 0.29464319945
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 1021,
-        "time": 0.16414719960000007
+        "time": 0.25775999875
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 2048,
-        "time": 0.17108799899999994
+        "time": 0.264022398
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 2045,
-        "time": 0.17025407989999997
+        "time": 0.25554879840000005
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 4096,
-        "time": 0.18003776083999995
+        "time": 0.2971647993
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 4093,
-        "time": 0.27745215827999997
+        "time": 0.25600319885
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 8192,
-        "time": 0.27689024025999986
+        "time": 0.28742720190000004
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 8189,
-        "time": 0.29721343940000006
+        "time": 0.293137598
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 16384,
-        "time": 0.31177664101999986
+        "time": 0.318436797
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 16381,
-        "time": 0.3172870394800001
+        "time": 0.28445599900000007
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 32768,
-        "time": 0.37961407838
+        "time": 0.2792432003
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 32765,
-        "time": 0.3233644798199999
+        "time": 0.28271679805
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 65536,
-        "time": 0.31797055756000003
+        "time": 0.29586880355
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 65533,
-        "time": 0.24323392028000002
+        "time": 0.28396480015000003
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 131072,
-        "time": 0.27286528109999997
+        "time": 0.29885440175
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 131069,
-        "time": 0.26184639962000006
+        "time": 0.30306879725
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 262144,
-        "time": 0.2960684800000001
+        "time": 0.3242464021499999
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 262141,
-        "time": 0.25213631983999996
+        "time": 0.3136191979
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 524288,
-        "time": 0.29473600269999994
+        "time": 0.33627359874999996
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 524285,
-        "time": 0.29155904024000007
+        "time": 0.32482879749999993
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 1048576,
-        "time": 0.37368447906
+        "time": 0.34519679994999997
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 1048573,
-        "time": 0.34749119875999995
+        "time": 0.3446224003499999
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 2097152,
-        "time": 0.43220671643999997
+        "time": 0.39331039935000006
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 2097149,
-        "time": 0.4074432010200001
+        "time": 0.38747519995
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 4194304,
-        "time": 0.49009984144
+        "time": 0.46767040325
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 4194301,
-        "time": 0.48926719906000005
+        "time": 0.46391040105000003
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 8388608,
-        "time": 0.58808576108
+        "time": 0.6864319979499999
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 8388605,
-        "time": 0.5855116832
+        "time": 0.7330752045500001
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 16777216,
-        "time": 0.9948243237600002
+        "time": 1.0433407994499997
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 16777213,
-        "time": 0.9834156823600001
+        "time": 1.0335216048999998
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 33554432,
-        "time": 3.2786201573999993
+        "time": 3.3025663965
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 33554429,
-        "time": 3.2774220756
+        "time": 3.299779224500001
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 67108864,
-        "time": 6.5610803126
+        "time": 6.6047728065
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 67108861,
-        "time": 6.559060497200001
+        "time": 6.596068763
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 134217728,
-        "time": 13.214376999999999
+        "time": 13.247611294999999
     },
     {
         "operation": "scan",
         "implementation": "efficient",
         "input_size": 134217725,
-        "time": 13.200697636000003
+        "time": 13.219316865
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 16,
-        "time": 0.09387392025399999
+        "time": 0.07598720078500001
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 13,
-        "time": 0.09058047984
+        "time": 0.07556960039500002
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 32,
-        "time": 0.08654208015400001
+        "time": 0.08197599948500002
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 29,
-        "time": 0.08894592053799999
+        "time": 0.0674304001
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 64,
-        "time": 0.075887360196
+        "time": 0.07645439986000001
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 61,
-        "time": 0.07836864044799999
+        "time": 0.06527200023499999
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 128,
-        "time": 0.076099839572
+        "time": 0.081427199975
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 125,
-        "time": 0.07958143979599998
+        "time": 0.06682880035
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 256,
-        "time": 0.073096960178
+        "time": 0.06972480008
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 253,
-        "time": 0.07639616005000001
+        "time": 0.0679440001
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 512,
-        "time": 0.07595136007000002
+        "time": 0.08403999972000001
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 509,
-        "time": 0.08259904076999999
+        "time": 0.06657759994999998
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 1024,
-        "time": 0.08324672015599999
+        "time": 0.07589599970999998
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 1021,
-        "time": 0.07896640026000001
+        "time": 0.067726400675
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 2048,
-        "time": 0.07684095963600002
+        "time": 0.074191999215
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 2045,
-        "time": 0.07782975971000003
+        "time": 0.07467519996000001
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 4096,
-        "time": 0.08222656027000001
+        "time": 0.0649136005
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 4093,
-        "time": 0.08068159999
+        "time": 0.07046880031499998
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 8192,
-        "time": 0.066238720048
+        "time": 0.06553919985499998
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 8189,
-        "time": 0.06643328034
+        "time": 0.06647680085499999
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 16384,
-        "time": 0.066281599624
+        "time": 0.071201599735
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 16381,
-        "time": 0.067354240038
+        "time": 0.06698559987
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 32768,
-        "time": 0.06658879978799999
+        "time": 0.06642720029499999
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 32765,
-        "time": 0.066262399626
+        "time": 0.06753280051
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 65536,
-        "time": 0.067402240032
+        "time": 0.06519039925
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 65533,
-        "time": 0.077965440284
+        "time": 0.06966720092499999
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 131072,
-        "time": 0.10106367978200005
+        "time": 0.06624480000499999
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 131069,
-        "time": 0.085861120428
+        "time": 0.06996320039
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 262144,
-        "time": 0.33482879992000003
+        "time": 0.31324639765
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 262141,
-        "time": 0.33190015970000003
+        "time": 0.31199679979999995
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 524288,
-        "time": 0.32727679969999995
+        "time": 0.3123472020500001
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 524285,
-        "time": 0.3251660787800001
+        "time": 0.31131359645000006
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 1048576,
-        "time": 0.34600128058
+        "time": 0.32669759975
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 1048573,
-        "time": 0.34909055774
+        "time": 0.3284175977
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 2097152,
-        "time": 0.34593663935999996
+        "time": 0.3446032032
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 2097149,
-        "time": 0.3445427185400001
+        "time": 0.3373167991
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 4194304,
-        "time": 0.3684364788800001
+        "time": 0.39210079914999996
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 4194301,
-        "time": 0.36108607952
+        "time": 0.37197120335000006
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 8388608,
-        "time": 0.4290956806799999
+        "time": 0.43309439869999994
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 8388605,
-        "time": 0.42006975941999997
+        "time": 0.4377663999
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 16777216,
-        "time": 0.5754092848600001
+        "time": 0.5663231939500001
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 16777213,
-        "time": 0.56926656122
+        "time": 0.5767648011000001
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 33554432,
-        "time": 0.7554553579999999
+        "time": 0.7861919968500001
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 33554429,
-        "time": 0.7419436765599999
+        "time": 0.7637680054
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 67108864,
-        "time": 1.2084915208000004
+        "time": 1.2209151859999998
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 67108861,
-        "time": 1.2290566396
+        "time": 1.2257215975000002
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 134217728,
-        "time": 1.9009356904
+        "time": 1.9061088024999997
     },
     {
         "operation": "scan",
         "implementation": "thrust",
         "input_size": 134217725,
-        "time": 1.8790112019999998
+        "time": 1.8970447955
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 16,
+        "time": 0.25990239979999996
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 13,
+        "time": 0.2816287994
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 32,
+        "time": 0.2628847986499999
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 29,
+        "time": 0.27383999914999996
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 64,
+        "time": 0.25783039934999996
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 61,
+        "time": 0.25985120084999996
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 128,
+        "time": 0.2627199969999999
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 125,
+        "time": 0.25792480265
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 256,
+        "time": 0.26026559775
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 253,
+        "time": 0.2638176002
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 512,
+        "time": 0.26346879835000003
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 509,
+        "time": 0.264231997
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 1024,
+        "time": 0.28193119910000003
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 1021,
+        "time": 0.28579680035
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 2048,
+        "time": 0.28121440555
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 2045,
+        "time": 0.27840639790000005
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 4096,
+        "time": 0.27757759835
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 4093,
+        "time": 0.26681919995000003
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 8192,
+        "time": 0.27826560065000006
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 8189,
+        "time": 0.27659839845
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 16384,
+        "time": 0.27497759470000005
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 16381,
+        "time": 0.29081280224999995
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 32768,
+        "time": 0.28556479815
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 32765,
+        "time": 0.30843520169999994
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 65536,
+        "time": 0.34118079990000005
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 65533,
+        "time": 0.34975359729999994
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 131072,
+        "time": 0.3519711985999999
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 131069,
+        "time": 0.3526464000499999
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 262144,
+        "time": 0.34621759815
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 262141,
+        "time": 0.35266239940000005
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 524288,
+        "time": 0.33069600015
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 524285,
+        "time": 0.34133920225000003
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 1048576,
+        "time": 0.2523616
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 1048573,
+        "time": 0.21884000154999997
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 2097152,
+        "time": 0.24962719895000007
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 2097149,
+        "time": 0.21965120135000005
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 4194304,
+        "time": 0.26313920025000004
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 4194301,
+        "time": 0.24904000080000005
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 8388608,
+        "time": 0.28106239965
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 8388605,
+        "time": 0.2867519988000001
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 16777216,
+        "time": 0.30306400055000005
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 16777213,
+        "time": 0.30300320085
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 33554432,
+        "time": 0.6449887960499999
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 33554429,
+        "time": 0.6306928039499999
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 67108864,
+        "time": 1.2027919950000001
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 67108861,
+        "time": 1.2180655965
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 134217728,
+        "time": 2.3920944094999994
+    },
+    {
+        "operation": "scan",
+        "implementation": "efficient_plus",
+        "input_size": 134217725,
+        "time": 2.396910416
     }
 ]

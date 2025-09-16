@@ -47,14 +47,20 @@ def main() -> None:
         fig.savefig(Path(__file__).parent.parent / "img" / filename)
 
     plot_and_save(
-        ["cpu", "naive", "efficient", "thrust"],
-        ["CPU", "GPU (naive)", "GPU (work-efficient)", "GPU (Thrust)"],
+        ["naive", "efficient", "efficient_plus", "thrust", "cpu"],
+        [
+            "GPU (naive)",
+            "GPU (efficient)",
+            "GPU (work-efficient plus)",
+            "GPU (Thrust)",
+            "CPU",
+        ],
         False,
         "performance.png",
     )
     plot_and_save(
-        ["naive", "efficient", "thrust"],
-        ["Naive", "Work-efficient", "Thrust"],
+        ["naive", "efficient", "efficient_plus", "thrust"],
+        ["Naive", "Work-efficient", "Work-efficient plus", "Thrust"],
         True,
         "performance-gpu-only.png",
     )

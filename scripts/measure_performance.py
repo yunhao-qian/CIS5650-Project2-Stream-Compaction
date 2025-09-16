@@ -24,7 +24,7 @@ def main() -> None:
                 return entry
         return None
 
-    for implementation in ["cpu", "naive", "efficient", "thrust"]:
+    for implementation in ["cpu", "naive", "efficient", "efficient_plus", "thrust"]:
         for exponent in range(4, 28):
             base_input_size = 1 << exponent
             for input_size in [base_input_size, base_input_size - 3]:
@@ -38,7 +38,7 @@ def main() -> None:
                     continue
 
                 time_sum = 0.0
-                time_count = 50
+                time_count = 20
                 for _ in range(time_count):
                     time_sum += measure_time("scan", implementation, input_size)
                 time = time_sum / time_count

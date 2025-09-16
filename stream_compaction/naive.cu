@@ -40,6 +40,7 @@ namespace StreamCompaction {
             cudaMemcpy(dev_iData, idata, dataSize, cudaMemcpyHostToDevice);
             int *dev_oData;
             cudaMalloc((void **)&dev_oData, dataSize);
+            cudaDeviceSynchronize();
 
             timer().startGpuTimer();
             const int gridSize = (n + blockSize - 1) / blockSize;
