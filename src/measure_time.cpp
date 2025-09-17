@@ -1,8 +1,10 @@
+#include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 #include <random>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <stream_compaction/cpu.h>
@@ -62,78 +64,43 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    // Some implementations (e.g., Thrust) allocates memory internally on the first run, so we run
+    // the operation twice and only measure the later one.
+#define REPEAT_TWICE(function, ...)                                                                \
+    do {                                                                                           \
+        function(inputSize, outputs.data(), inputs.data(), __VA_ARGS__);                           \
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));                                \
+        function(inputSize, outputs.data(), inputs.data(), __VA_ARGS__);                           \
+    } while (false)
+
     if (operation == "scan") {
         if (implementation == "cpu") {
-            if (blockSize >= 0 || elementsPerThread >= 0) {
-                return -1;
-            }
-            StreamCompaction::CPU::scan(inputSize, outputs.data(), inputs.data());
+            REPEAT_TWICE(StreamCompaction::CPU::scan);
         } else if (implementation == "naive") {
-            if (elementsPerThread >= 0) {
-                return -1;
-            }
-            if (blockSize >= 0) {
-                StreamCompaction::Naive::scan(inputSize, outputs.data(), inputs.data(), blockSize);
-            } else {
-                StreamCompaction::Naive::scan(inputSize, outputs.data(), inputs.data());
-            }
+            REPEAT_TWICE(StreamCompaction::Naive::scan, blockSize);
         } else if (implementation == "efficient") {
-            if (elementsPerThread >= 0) {
-                return -1;
-            }
-            if (blockSize >= 0) {
-                StreamCompaction::Efficient::scan(inputSize, outputs.data(), inputs.data(),
-                                                  blockSize);
-            } else {
-                StreamCompaction::Efficient::scan(inputSize, outputs.data(), inputs.data());
-            }
+            REPEAT_TWICE(StreamCompaction::Efficient::scan, blockSize);
         } else if (implementation == "efficient_plus") {
-            if (blockSize >= 0) {
-                if (elementsPerThread >= 0) {
-                    StreamCompaction::EfficientPlus::scan(inputSize, outputs.data(), inputs.data(),
-                                                          blockSize, elementsPerThread);
-                } else {
-                    StreamCompaction::EfficientPlus::scan(inputSize, outputs.data(), inputs.data(),
-                                                          blockSize);
-                }
-            } else {
-                if (elementsPerThread >= 0) {
-                    return -1;
-                } else {
-                    StreamCompaction::EfficientPlus::scan(inputSize, outputs.data(), inputs.data());
-                }
-            }
+            REPEAT_TWICE(StreamCompaction::EfficientPlus::scan, blockSize, elementsPerThread);
         } else if (implementation == "thrust") {
-            if (blockSize >= 0 || elementsPerThread >= 0) {
-                return -1;
-            }
-            StreamCompaction::Thrust::scan(inputSize, outputs.data(), inputs.data());
+            REPEAT_TWICE(StreamCompaction::Thrust::scan);
         } else {
             return -1;
         }
     } else if (operation == "compact") {
-        if (implementation == "efficient") {
-            if (elementsPerThread >= 0) {
-                return -1;
-            }
-            if (blockSize >= 0) {
-                StreamCompaction::Efficient::compact(inputSize, outputs.data(), inputs.data(),
-                                                     blockSize);
-            } else {
-                StreamCompaction::Efficient::compact(inputSize, outputs.data(), inputs.data());
-            }
-        } else {
-            return -1;
-        }
+        REPEAT_TWICE(StreamCompaction::Efficient::compact, blockSize);
     } else {
         return -1;
     }
 
+#undef REPEAT_TWICE
+
     std::cout << std::setprecision(std::numeric_limits<float>::max_digits10);
     if (isGpu) {
-        std::cout << timer->getGpuElapsedTimeForPreviousOperation() << std::endl;
+        std::cout << timer->getGpuElapsedTimeForPreviousOperation();
     } else {
-        std::cout << timer->getCpuElapsedTimeForPreviousOperation() << std::endl;
+        std::cout << timer->getCpuElapsedTimeForPreviousOperation();
     }
+    std::cout << std::endl;
     return 0;
 }

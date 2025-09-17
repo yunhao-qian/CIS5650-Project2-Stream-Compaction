@@ -2,7 +2,11 @@
 #include <cuda_runtime.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
+#include <thrust/mr/allocator.h>
+#include <thrust/mr/disjoint_pool.h>
 #include <thrust/scan.h>
+#include <thrust/system/cuda/execution_policy.h>
+#include <thrust/system/cuda/memory_resource.h>
 
 #include "common.h"
 #include "thrust.h"
@@ -14,20 +18,27 @@ namespace StreamCompaction {
             static PerformanceTimer timer;
             return timer;
         }
+
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int *odata, const int *idata) {
-            thrust::host_vector<int> host_in(idata, idata + n);
-            thrust::device_vector<int> dev_in = host_in;
-            thrust::device_vector<int> dev_out(n);
+            // Use a memory pool to reduce memory allocation overhead of Thrust operations.
+            static thrust::cuda::memory_resource upstream;
+            static thrust::mr::new_delete_resource bookkeeper;
+            static thrust::mr::disjoint_unsynchronized_pool_resource pool(&upstream, &bookkeeper);
+            thrust::mr::allocator<char, decltype(pool)> allocator(&pool);
+            const auto policy = thrust::cuda::par(allocator);
+
+            thrust::device_vector<int> dev_data(n);
+            thrust::copy_n(idata, n, dev_data.begin());
             cudaDeviceSynchronize();
 
             timer().startGpuTimer();
-            thrust::exclusive_scan(dev_in.begin(), dev_in.end(), dev_out.begin());
+            thrust::exclusive_scan(policy, dev_data.begin(), dev_data.end(), dev_data.begin());
             timer().endGpuTimer();
 
-            thrust::copy(dev_out.begin(), dev_out.end(), odata);
+            thrust::copy(dev_data.begin(), dev_data.end(), odata);
         }
     }
 }

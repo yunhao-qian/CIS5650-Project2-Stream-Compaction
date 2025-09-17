@@ -66,7 +66,12 @@ namespace StreamCompaction {
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
-        void scan(int n, int *odata, const int *idata, const int blockSize) {
+        void scan(int n, int *odata, const int *idata, int blockSize) {
+            // Set default parameters.
+            if (blockSize <= 0) {
+                blockSize = 64;
+            }
+
             const auto dataSize = n * sizeof(int);
             const int ceiledN = 1 << ilog2ceil(n);
             const auto ceiledDataSize = ceiledN * sizeof(int);
@@ -96,7 +101,12 @@ namespace StreamCompaction {
          * @param idata  The array of elements to compact.
          * @returns      The number of elements remaining after compaction.
          */
-        int compact(int n, int *odata, const int *idata, const int blockSize) {
+        int compact(int n, int *odata, const int *idata, int blockSize) {
+            // Set default parameters.
+            if (blockSize <= 0) {
+                blockSize = 64;
+            }
+
             const auto dataSize = n * sizeof(int);
             const int ceiledN = 1 << ilog2ceil(n);
             const auto ceiledDataSize = ceiledN * sizeof(int);

@@ -38,7 +38,7 @@ def main() -> None:
                     continue
 
                 time_sum = 0.0
-                time_count = 20
+                time_count = 10
                 for _ in range(time_count):
                     time_sum += measure_time("scan", implementation, input_size)
                 time = time_sum / time_count

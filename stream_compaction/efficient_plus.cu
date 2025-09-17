@@ -96,41 +96,34 @@ namespace StreamCompaction {
             }
         }
 
-        __global__ void addSums(unsigned n, int *__restrict__ data, const int *__restrict__ sums,
-                                unsigned elementsPerThread) {
-            unsigned startIndex = (blockIdx.x * blockDim.x + threadIdx.x) * elementsPerThread * 2U;
-            unsigned endIndex = min(startIndex + elementsPerThread * 2U, n);
+        template <unsigned ElementsPerThread>
+        __global__ void addSums(unsigned n, int *__restrict__ data, const int *__restrict__ sums) {
+            unsigned startIndex = (blockIdx.x * blockDim.x + threadIdx.x) * ElementsPerThread * 2U;
+            unsigned endIndex = min(startIndex + ElementsPerThread * 2U, n);
             int sum = sums[blockIdx.x];
             for (unsigned index = startIndex; index < endIndex; ++index) {
                 data[index] += sum;
             }
         }
 
-        void scanImpl(unsigned n, int *data, unsigned blockSize, unsigned elementsPerThread,
-                      unsigned tileSize, unsigned sharedMemorySize, unsigned gridSize, int *sums) {
-#define DISPATCH(N) scanPerBlock<N><<<gridSize, blockSize, sharedMemorySize>>>(n, data, sums);
-            switch (elementsPerThread) {
-            case 1U:
-                DISPATCH(1U);
-                break;
-            case 2U:
-                DISPATCH(2U);
-                break;
-            case 4U:
-                DISPATCH(4U);
-                break;
-            case 8U:
-                DISPATCH(8U);
-                break;
-            case 16U:
-                DISPATCH(16U);
-                break;
-            default:
-                printf("Error: elementsPerThread %u is not supported!\n", elementsPerThread);
-                exit(1);
+        template <unsigned ElementsPerThread>
+        void scanImpl(unsigned n, int *data, unsigned blockSize, unsigned tileSize,
+                      unsigned gridSize, int *sums) {
+            unsigned actualBlockSize = blockSize;
+            if (gridSize == 1U) {
+                while (true) {
+                    unsigned nextBlockSize = actualBlockSize / 2U;
+                    if (nextBlockSize * ElementsPerThread * 2U < n) {
+                        break;
+                    }
+                    actualBlockSize = nextBlockSize;
+                }
             }
-#undef DISPATCH
-
+            unsigned sharedMemorySize =
+                (conflictFreeIndex(actualBlockSize * ElementsPerThread * 2U - 1U) + 1U) *
+                sizeof(int);
+            scanPerBlock<ElementsPerThread>
+                <<<gridSize, actualBlockSize, sharedMemorySize>>>(n, data, sums);
             checkCUDAErrorFn("scanPerBlock kernel failed!");
             if (gridSize > 1U) {
                 unsigned nextGridSize = (gridSize + tileSize - 1U) / tileSize;
@@ -138,15 +131,22 @@ namespace StreamCompaction {
                 if (nextGridSize > 1U) {
                     nextSums = sums + gridSize;
                 }
-                scanImpl(gridSize, sums, blockSize, elementsPerThread, tileSize, sharedMemorySize,
-                         nextGridSize, nextSums);
-                addSums<<<gridSize, blockSize>>>(n, data, sums, elementsPerThread);
+                scanImpl<ElementsPerThread>(gridSize, sums, blockSize, tileSize, nextGridSize,
+                                            nextSums);
+                addSums<ElementsPerThread><<<gridSize, blockSize>>>(n, data, sums);
                 checkCUDAErrorFn("addSums kernel failed!");
             }
         }
 
-        void scan(int n, int *odata, const int *idata, const int blockSize,
-                  const int elementsPerThread) {
+        void scan(int n, int *odata, const int *idata, int blockSize, int elementsPerThread) {
+            // Set default parameters.
+            if (blockSize <= 0) {
+                blockSize = 256;
+            }
+            if (elementsPerThread <= 0) {
+                elementsPerThread = 1;
+            }
+
             const auto dataSize = n * sizeof(int);
 
             int *dev_data;
@@ -157,7 +157,62 @@ namespace StreamCompaction {
 
             // Allocate GPU memory for sums beforehand.
             unsigned tileSize = blockSize * elementsPerThread * 2U;
-            unsigned sharedMemorySize = (conflictFreeIndex(tileSize - 1U) + 1U) * sizeof(int);
+            unsigned gridSize = (n + tileSize - 1U) / tileSize;
+
+            unsigned totalSumCount = 0U;
+            {
+                unsigned gridSize = n;
+                while (true) {
+                    gridSize = (gridSize + tileSize - 1U) / tileSize;
+                    if (gridSize <= 1U) {
+                        break;
+                    }
+                    totalSumCount += gridSize;
+                }
+            }
+            int *dev_sums = nullptr;
+            if (totalSumCount > 0U) {
+                cudaMalloc((void **)&dev_sums, totalSumCount * sizeof(int));
+                checkCUDAErrorFn("cudaMalloc dev_sums failed!");
+            }
+            cudaDeviceSynchronize();
+
+#define DISPATCH(N)                                                                                \
+    case N:                                                                                        \
+        scanImpl<N>(n, dev_data, blockSize, tileSize, gridSize, dev_sums);                         \
+        break
+
+            timer().startGpuTimer();
+
+            switch (elementsPerThread) {
+                DISPATCH(1);
+                DISPATCH(2);
+                DISPATCH(4);
+                DISPATCH(8);
+                DISPATCH(16);
+            default:
+                printf("Unsupported elementsPerThread: %d\n", elementsPerThread);
+                exit(1);
+            }
+            timer().endGpuTimer();
+
+#undef DISPATCH
+
+            cudaMemcpy(odata, dev_data, dataSize, cudaMemcpyDeviceToHost);
+            checkCUDAErrorFn("cudaMemcpy to host failed!");
+            cudaFree(dev_data);
+            checkCUDAErrorFn("cudaFree failed!");
+            if (dev_sums != nullptr) {
+                cudaFree(dev_sums);
+                checkCUDAErrorFn("cudaFree failed!");
+            }
+        }
+
+        void scanDeviceInPlace(int n, int *data) {
+            const unsigned blockSize = 256;
+            constexpr unsigned ElementsPerThread = 1;
+
+            unsigned tileSize = blockSize * ElementsPerThread * 2U;
             unsigned gridSize = (n + tileSize - 1U) / tileSize;
 
             unsigned totalSumCount = 0U;
@@ -177,16 +232,8 @@ namespace StreamCompaction {
                 checkCUDAErrorFn("cudaMalloc dev_sums failed!");
             }
 
-            cudaDeviceSynchronize();
-            timer().startGpuTimer();
-            scanImpl(n, dev_data, blockSize, elementsPerThread, tileSize, sharedMemorySize,
-                     gridSize, dev_sums);
-            timer().endGpuTimer();
+            scanImpl<ElementsPerThread>(n, data, blockSize, tileSize, gridSize, dev_sums);
 
-            cudaMemcpy(odata, dev_data, dataSize, cudaMemcpyDeviceToHost);
-            checkCUDAErrorFn("cudaMemcpy to host failed!");
-            cudaFree(dev_data);
-            checkCUDAErrorFn("cudaFree failed!");
             if (dev_sums != nullptr) {
                 cudaFree(dev_sums);
                 checkCUDAErrorFn("cudaFree failed!");

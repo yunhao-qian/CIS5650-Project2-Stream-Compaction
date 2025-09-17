@@ -32,7 +32,12 @@ namespace StreamCompaction {
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
-        void scan(int n, int *odata, const int *idata, const int blockSize) {
+        void scan(int n, int *odata, const int *idata, int blockSize) {
+            // Set default parameters.
+            if (blockSize <= 0) {
+                blockSize = 256;
+            }
+
             const auto dataSize = n * sizeof(int);
 
             int *dev_iData;

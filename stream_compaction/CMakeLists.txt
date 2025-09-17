@@ -1,18 +1,22 @@
 set(headers
     "common.h"
     "cpu.h"
+    "cpu_sort.h"
     "naive.h"
     "efficient.h"
     "efficient_plus.h"
+    "radix_sort.h"
     "thrust.h"
     )
 
 set(sources
     "common.cu"
     "cpu.cu"
+    "cpu_sort.cu"
     "naive.cu"
     "efficient.cu"
     "efficient_plus.cu"
+    "radix_sort.cu"
     "thrust.cu"
     )
 

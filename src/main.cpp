@@ -8,9 +8,11 @@
 
 #include <cstdio>
 #include <stream_compaction/cpu.h>
+#include <stream_compaction/cpu_sort.h>
 #include <stream_compaction/naive.h>
 #include <stream_compaction/efficient.h>
 #include <stream_compaction/efficient_plus.h>
+#include <stream_compaction/radix_sort.h>
 #include <stream_compaction/thrust.h>
 #include "testing_helpers.hpp"
 
@@ -161,6 +163,43 @@ int main(int argc, char* argv[]) {
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     //printArray(count, c, true);
     printCmpLenResult(count, expectedNPOT, b, c);
+
+    printf("\n");
+    printf("*******************\n");
+    printf("** SORTING TESTS **\n");
+    printf("*******************\n");
+
+    genArray(SIZE, a, SIZE);
+    a[SIZE - 1] = 0;
+    printArray(SIZE, a, true);
+
+    zeroArray(SIZE, b);
+    printDesc("cpu sort, power-of-two");
+    StreamCompaction::CPUSort::sort(SIZE, b, a);
+    printElapsedTime(StreamCompaction::CPUSort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    // printArray(SIZE, b, true);
+    // printCmpResult(SIZE, b, b);
+
+    zeroArray(SIZE, c);
+    printDesc("gpu radix sort, power-of-two");
+    StreamCompaction::RadixSort::sort(SIZE, c, a);
+    printElapsedTime(StreamCompaction::RadixSort::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    // printArray(SIZE, c, true);
+    printCmpResult(SIZE, b, c);
+
+    zeroArray(SIZE, b);
+    printDesc("cpu sort, non-power-of-two");
+    StreamCompaction::CPUSort::sort(NPOT, b, a);
+    printElapsedTime(StreamCompaction::CPUSort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    // printArray(NPOT, c, true);
+    // printCmpResult(NPOT, b, c);
+
+    zeroArray(SIZE, c);
+    printDesc("gpu radix sort, non-power-of-two");
+    StreamCompaction::RadixSort::sort(NPOT, c, a);
+    printElapsedTime(StreamCompaction::RadixSort::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    // printArray(NPOT, c, true);
+    printCmpResult(NPOT, b, c);
 
     system("pause"); // stop Win32 console from closing on exit
     delete[] a;

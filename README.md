@@ -20,22 +20,26 @@ This project implements stream compaction and its building blocks (map, scan, sc
 - A CPU implementation of scan and stream compaction
 - GPU implementations of scan, using both naive and work-efficient methods
 - A GPU implementation of stream compaction based on the work-efficient scan
+- A carefully optimized work-efficient scan that leverages shared memory along with several additional optimizations
 - C++ and Python scripts used to automate performance measurement accurately and programmatically
 - Performance analysis comparing the different methods
+- More in-depth performance analysis conducted with Nsight
 
 ### Changes to `CMakeLists.txt`
 
-An additional executable,`measure_time.exe`, has been added to the project to support block size tuning, performance benchmarking, and profiling.
+- An additional executable,`measure_time.exe`, has been added to the project to support block size tuning, performance benchmarking, and profiling.
+- The files `cpu_sort.h`, `cpu_sort.cu`, `radix_sort.h`, `radix_sort.h` were introduced to implement Extra Credit 1.
+- The files `efficient_plus.h` and `efficient_plus.cu` were introduced to implement Extra Credit 2.
 
-### Changes to Function Signatures
+### Function Overloads
 
-To simplify block size tuning, I added an optional `blockSize` parameter to the following functions, each with a tuned default value:
+To make block size tuning easier, I added overloads of the following functions that accept an additional `blockSize` parameter. The original overloads remain unchanged and simply forward to the new versions with a tuned default value:
 
-- `Naive::scan(..., const int blockSize = 256)`
-- `Efficient::scan(..., const int blockSize = 64)`
-- `Efficient::compact(..., const int blockSize = 64)`
+- `Naive::scan(..., const int blockSize)`
+- `Efficient::scan(..., const int blockSize)`
+- `Efficient::compact(..., const int blockSize)`
 
-These parameters are used only by `measure_time.exe` and do not affect existing calls.
+These changes are only used by `measure_time.exe` and do not affect existing code paths.
 
 ## Part 1: CPU Scan & Stream Compaction
 
@@ -72,7 +76,7 @@ In [`common.h`](stream_compaction/common.h) and [`common.cu`](stream_compaction/
 - `kernMapToBoolean()` A CUDA kernel that maps each integer to 0 or 1, depending on whether the value is zero.
 - `kernScatter()`: A CUDA kernel that performs the scatter operation with vector addressing. Conditioned on a boolean array, it optionally stores elements at locations specified by an index array.
 
-In [`efficient.h](stream_compaction/efficient.h) and [`efficient.cu`](stream_compaction/efficient.cu):
+In [`efficient.h`](stream_compaction/efficient.h) and [`efficient.cu`](stream_compaction/efficient.cu):
 
 - `compact()`: Implements stream compaction on GPU using map (via `kernMapToBoolean()`) → scan (via `scanImpl()`) → scatter (via `kernScatter()`).
 
@@ -81,6 +85,7 @@ In [`efficient.h](stream_compaction/efficient.h) and [`efficient.cu`](stream_com
 In [`thrust.h`](stream_compaction/thrust.h) and [`thrust.cu`](stream_compaction/thrust.cu):
 
 - `scan()`: Wraps `thrust::exclusive_scan()`, adding timing instrumentation and exposing the same API as the other implementations.
+- Profiling revealed that beyond a certain input size, `thrust::exclusive_scan()` switches to an algorithm that allocates GPU memory internally. These allocations introduced significant variability in benchmarking, at times making Thrust appear slower than even the naive implementation. To address this, I created a reusable memory pool and invoked the overload of `exclusive_scan` that accepts an execution policy configured with that pool. This allows the benchmark to perform a warm-up run (which handles any necessary allocations) and then time the second run, which reuses the existing memory without additional allocations.
 
 ## Part 5: Why is My GPU Approach So Slow?
 
@@ -95,7 +100,16 @@ I believe Part 3.1 already incorporates the optimizations described in the instr
 
 ### Extra Credit 1: Radix Sort
 
-This part is not implemented.
+Radix sort is implemented in `radix_sort.cu`. It uses the `efficient_plus.cu` scan developed for extra credit 2, along with several other utility kernels. The algorithm processes the input data one bit at a time, from the least significant to the most significant.
+
+For each bit, the process is as follows:
+
+1. Extract Bits: The specific bit is extracted from each integer.
+2. Scan for Indices: A parallel scan is performed on these extracted bits to determine the correct destination index for each element.
+3. Count Deduction: The last element of the scanned output and the last element of the input are used to quickly deduce the counts of both zeros and ones.
+4. Stable Scatter: A stable scatter operation then moves the elements to their new, sorted positions based on the calculated indices, preserving the relative order of elements with the same bit value.
+
+After iterating through all the bits, the data is fully sorted. The correctness of the GPU implementation is verified in `main.cpp` by comparing its output against a baseline CPU sorting algorithm implemented in `cpu_sort.cu`. The results confirm that the implementation is accurate.
 
 ### Extra Credit 2: GPU Scan Using Shared Memory && Hardware Optimization
 
@@ -104,12 +118,13 @@ To improve the work-efficient implementation, I developed the work-efficient plu
 - Kernel fusing: The up-sweep and down-sweep phases are fused into a single kernel invocation. Although compacting indices no longer reduces the number of blocks, this approach minimizes divergence and is therefore retained.
 - Shared memory usage: Instead of operating directly on global memory, data is first copied into shared memory, scanned per block, and then copied back to global memory.
 - Recursive tiling: Since a block can only process a limited number of elements, the algorithm is made recursive.
-  - The array is partitioned into tiles, one per block.  
-  - In addition to performing the scan, each block writes its tile sum into a new array.  
+  - The array is partitioned into tiles, one per block.
+  - In addition to performing the scan, each block writes its tile sum into a new array.
   - An exclusive scan is recursively applied to this array of tile sums, and the results are then added back to the input data.
 - Avoiding shared memory bank conflicts: Shared memory indexing is padded following the method described in GPU Gems. This introduces only a small increase in memory usage.
 - Preallocating the recursion buffer: To avoid repeated allocation of temporary GPU buffers for tile sums, the recursion depth and total required storage are precomputed. A single contiguous GPU buffer is allocated and reused across all recursion levels.
 - Multiple elements per thread: As an experiment, I added support for processing multiple elements per thread, controlled by the compile-time template parameter `ElementsPerThread`. Different variants are dispatched at runtime, and loops over per-thread elements are unrolled with `#pragma unroll`. In practice, this optimization was not beneficial; the tuned configuration still uses one element per thread.
+- Shrinking block size in the final recursion: In the last recursion step, the input is often much smaller than the predefined block size. As a niche optimization, the block size can be reduced to the smallest power of two that accommodates the input, with shared memory usage adjusted accordingly. However, testing showed no measurable performance improvement from this change.
 
 ## Part 7: Write-up
 
@@ -142,15 +157,15 @@ From these experiments, the chosen defaults are:
 
 - Block size 256 for the naive scan
 - Block size 64 for the work-efficient scan and compaction
-- Block size 256 for the work-efficient plus (for extra credit 2) scan, with 1 element per thread
+- Block size 256 for the work-efficient plus (extra credit 2) scan, with 1 element per thread
 
 #### Performance Comparison
 
 To systematically collect execution time data across many configurations, I created a Python script, [`measure_performance.py`](scripts/measure_performance.py). This script relies on the previously described `measure_time.exe` to benchmark runtime across a range of input sizes and implementations. The procedure is as follows:
 
 - Input sizes are tested from $2^4$ up to $2^{27}$, using both exact powers of two and non-powers of two ($2^i - 3$ for each $i$) to capture different performance behaviors.
-- The number of elements processed per thread is selected from the set {1, 2, 4, 8, 16}.
-- Each configuration is executed 20 times, and the mean runtime is recorded.
+- The number of elements processed per thread is selected from the set `{1, 2, 4, 8, 16}`.
+- Each configuration is executed 10 times, and the mean runtime is recorded.
 - Results are stored in a JSON file ([`performance.json`](scripts/performance.json)).
 
 The JSON data is then processed by another script, [`plot_performance.py`](scripts/plot_performance.py), which generates the figures shown in this report.
@@ -188,25 +203,38 @@ Comparison of the two:
 - For $N < 2^{23}$, the so-called work-efficient implementation is actually slower than the naive version. This can be attributed to kernel launch overhead: the up-sweep and down-sweep phases double the number of kernel invocations. Although the total work is reduced, the benefit is negligible at these smaller sizes.
 - For larger $N$, the work-efficient method begins to outperform the naive implementation, and the gap widens quickly. This is because the work-efficient algorithm performs only $O(N)$ total operations, whereas the naive approach requires $O(N \log N)$.
 
-#### Work-Efficient Plus GPU Implementation (for Extra Credit 2)
+#### Work-Efficient Plus GPU Implementation (Extra Credit 2)
 
-- For small $N$, the performance is comparable to the naive and work-efficient implementations, without clear advantages. This is because each kernel must perform a full round trip from global memory → shared memory → global memory. When the amount of computation on shared memory is limited, this memory traffic dominates the runtime.  
-- For larger inputs ($N \geq 2^{20}$), the benefits of this implementation become evident due to the optimizations described earlier. It even outperforms Thrust at $2^{20} \leq N \leq 2^{25}$. However, I suspect Thrust’s performance in my environments are not representative (see below), so I do not claim that my implementation is more optimized than Thrust in general.
+- Outperforms both the naive and work-efficient versions even for very small $N$, likely due to requiring fewer kernel launches.
+- For larger inputs, achieves nearly an order of magnitude speedup over the previous two approaches, primarily from reduced global memory traffic and greater reliance on shared memory.
+- Despite these gains, Nsight analysis later shows that the implementation remains memory-bound.
+
+![Work-efficient plus Nsight Systems](img/efficient-plus-nsys.png)
+
+From the Nsight Systems timeline, execution begins with three `scanPerBlock` calls followed by three `addSums`. In the second and third recursion levels, the input size is so small that their runtimes are negligible. Nearly all of the execution time is spent in the first recursion level.
+
+![Work-efficient plus scanPerBlock Nsight Compute](img/efficient-plus-scan-per-block-ncu.png)
+
+![Work-efficient plus addSums Nsight Compute](img/efficient-plus-add-sums-ncu.png)
+
+In Nsight Compute, examining the first recursion’s `scanPerBlock` shows a moderate SM throughput of about 53%. The kernel is clearly memory-bound, with memory and DRAM throughput reaching 92%, indicating that global memory reads and writes still dominate execution time.
+
+In contrast, the first recursion's `addSums` achieves only 8% SM throughput, demonstrating that its performance is heavily constrained by global memory access. Under the current implementation, this behavior is expected and difficult to improve further without a major overhaul.
 
 #### Thrust GPU Implementation
 
-To better understand the behavior of `thrust::exclusive_scan()`, I profiled it using Nsight Systems. The results revealed only two CUDA kernel calls:
+Thrust’s `exclusive_scan()` delivers strong performance across all input sizes:
 
-- `DeviceScanInitKernel`, which is short-lived
-- `DeviceScanKernel`, which dominates execution time
+- For small $N$, the runtime is comparable to the optimized work-efficient plus implementation.
+- For large $N$, Thrust is roughly 2x faster. However, it is essential to warm up once before timing, so that internal GPU buffer allocations are excluded; otherwise, the runtime exhibits a sudden step increase after roughly $N = 2^{19}$.
 
-This suggests that Thrust fuses the entire scan into just two kernels. While the internal algorithm is not directly visible, it is reasonable to assume that it leverages shared memory and optimized memory access patterns.
+![Thrust Nsight Systems](img/thrust-nsys.png)
 
-The performance profile of Thrust’s `exclusive_scan` is notable:
+From the timeline in Nsight Systems, execution begins with a lightweight `DeviceScanInitKernel`, followed by a single `DeviceScanKernel` that dominates the runtime. It is notable that the main computation is handled almost entirely within a single kernel launch.
 
-- Small sizes ($N \leq 2^{17}$): Runtime remains relatively flat across input sizes. Although slower than the CPU implementation, it is still much faster than the naive and work-efficient GPU versions, likely due to the minimal number of kernel launches.
-- Mid sizes ($2^{18} \leq N \leq 2^{23}$): Runtime unexpectedly spikes, at times even performing worse than the naive implementation. It seems unlikely that NVIDIA’s official library would be poorly optimized, especially since this anomaly does not appear for other people. I suspect the performance degradation is related to the measurement methodology: repeatedly allocating memory, copying data CPU → GPU, launching kernels, copying results GPU → CPU, and freeing memory. This atypical workflow may interact with the driver in unusual ways. This remains a hypothesis and warrants further investigation.
-- Large sizes ($N > 2^{23}$): Thrust significantly outperforms the naive and work-efficient GPU implementations, presumably because its internal use of shared memory and optimized access patterns scales effectively at large input sizes.
+![Thrust Nsight Compute](img/thrust-ncu.png)
+
+In Nsight Compute, the `DeviceScanKernel` shows an SM throughput of 19%, lower than that of my work-efficient plus implementation, while memory and DRAM throughput remain similarly high at 93%. The high memory throughput reflects the inherent nature of the task. The lower SM throughput does not imply that Thrust’s implementation is less efficient. On the contrary, it likely reduces the total amount of computation through careful optimizations, with the lower SM utilization being a byproduct of that efficiency.
 
 #### Outputs of `cis5650_stream_compaction_test.exe`
 
@@ -214,216 +242,230 @@ The performance profile of Thrust’s `exclusive_scan` is notable:
 ****************
 ** SCAN TESTS **
 ****************
-    [   2  43  36  34   6  47  28  21  20  47   9  14  36 ...  28   0 ]
+    [  13  35   9   0  27   0   9  16  22   8  47  34  47 ...  12   0 ]
 ==== cpu scan, power-of-two ====
-   elapsed time: 1.6333ms    (std::chrono Measured)
-    [   0   2  45  81 115 121 168 196 217 237 284 293 307 ... 102726393 102726421 ]
+   elapsed time: 1.5831ms    (std::chrono Measured)
+    [   0  13  48  57  57  84  84  93 109 131 139 186 220 ... 102754952 102754964 ]
 ==== cpu scan, non-power-of-two ====
-   elapsed time: 1.4916ms    (std::chrono Measured)
-    [   0   2  45  81 115 121 168 196 217 237 284 293 307 ... 102726316 102726346 ]
+   elapsed time: 1.4894ms    (std::chrono Measured)
+    [   0  13  48  57  57  84  84  93 109 131 139 186 220 ... 102754881 102754896 ]
     passed
 ==== naive scan, power-of-two ====
-   elapsed time: 0.335968ms    (CUDA Measured)
+   elapsed time: 0.499936ms    (CUDA Measured)
     passed
 ==== naive scan, non-power-of-two ====
-   elapsed time: 0.330656ms    (CUDA Measured)
+   elapsed time: 0.336768ms    (CUDA Measured)
     passed
 ==== work-efficient scan, power-of-two ====
-   elapsed time: 0.464192ms    (CUDA Measured)
+   elapsed time: 0.865184ms    (CUDA Measured)
     passed
 ==== work-efficient scan, non-power-of-two ====
-   elapsed time: 0.368544ms    (CUDA Measured)
+   elapsed time: 0.569664ms    (CUDA Measured)
     passed
 ==== work-efficient plus scan, power-of-two ====
-   elapsed time: 0.191456ms    (CUDA Measured)
+   elapsed time: 0.472736ms    (CUDA Measured)
     passed
 ==== work-efficient plus scan, non-power-of-two ====
-   elapsed time: 0.073984ms    (CUDA Measured)
+   elapsed time: 0.07552ms    (CUDA Measured)
     passed
 ==== thrust scan, power-of-two ====
-   elapsed time: 0.320512ms    (CUDA Measured)
+   elapsed time: 0.277952ms    (CUDA Measured)
     passed
 ==== thrust scan, non-power-of-two ====
-   elapsed time: 0.336736ms    (CUDA Measured)
+   elapsed time: 0.04608ms    (CUDA Measured)
     passed
 
 *****************************
 ** STREAM COMPACTION TESTS **
 *****************************
-    [   0   3   2   2   2   1   2   3   0   3   1   2   2 ...   2   0 ]
+    [   1   3   1   0   1   0   1   0   0   0   1   0   1 ...   0   0 ]
 ==== cpu compact without scan, power-of-two ====
-   elapsed time: 7.1751ms    (std::chrono Measured)
-    [   3   2   2   2   1   2   3   3   1   2   2   2   3 ...   1   2 ]
+   elapsed time: 8.2601ms    (std::chrono Measured)
+    [   1   3   1   1   1   1   1   3   2   2   3   2   2 ...   1   2 ]
     passed
 ==== cpu compact without scan, non-power-of-two ====
-   elapsed time: 7.0687ms    (std::chrono Measured)
-    [   3   2   2   2   1   2   3   3   1   2   2   2   3 ...   3   2 ]
+   elapsed time: 8.5801ms    (std::chrono Measured)
+    [   1   3   1   1   1   1   1   3   2   2   3   2   2 ...   1   2 ]
     passed
 ==== cpu compact with scan ====
-   elapsed time: 14.5221ms    (std::chrono Measured)
-    [   3   2   2   2   1   2   3   3   1   2   2   2   3 ...   1   2 ]
+   elapsed time: 14.8527ms    (std::chrono Measured)
+    [   1   3   1   1   1   1   1   3   2   2   3   2   2 ...   1   2 ]
     passed
 ==== work-efficient compact, power-of-two ====
-   elapsed time: 0.524ms    (CUDA Measured)
+   elapsed time: 0.495744ms    (CUDA Measured)
     passed
 ==== work-efficient compact, non-power-of-two ====
-   elapsed time: 0.521024ms    (CUDA Measured)
+   elapsed time: 0.53136ms    (CUDA Measured)
     passed
-Press any key to continue . . .
+
+*******************
+** SORTING TESTS **
+*******************
+    [ 4113 24235 21309 2900 15577 2400 30009 8016 29272 30408 23697 20184 22097 ... 4812   0 ]
+==== cpu sort, power-of-two ====
+   elapsed time: 189.038ms    (std::chrono Measured)
+==== gpu radix sort, power-of-two ====
+   elapsed time: 3.96045ms    (CUDA Measured)
+    passed
+==== cpu sort, non-power-of-two ====
+   elapsed time: 191.916ms    (std::chrono Measured)
+==== gpu radix sort, non-power-of-two ====
+   elapsed time: 4.00803ms    (CUDA Measured)
+    passed
 ```
 
 #### Outputs of `tune_parameters.py`
 
 ```text
 Naive scan, power-of-two
-Block size: 8, time: 6.210713481 ms
-Block size: 16, time: 3.168515182 ms
-Block size: 32, time: 1.640864002 ms
-Block size: 64, time: 0.8767040014999999 ms
-Block size: 128, time: 0.5051392019 ms
-Block size: 256, time: 0.3497567982 ms
-Block size: 512, time: 0.3369727998 ms
-Block size: 1024, time: 0.3949791968 ms
-Optimal block size: 512, time: 0.3369727998 ms
+Block size: 8, time: 6.1931840430000005 ms
+Block size: 16, time: 3.160015989 ms
+Block size: 32, time: 1.6289984100000001 ms
+Block size: 64, time: 0.8754815995000002 ms
+Block size: 128, time: 0.5630367994000001 ms
+Block size: 256, time: 0.5268575905 ms
+Block size: 512, time: 0.5707488000000001 ms
+Block size: 1024, time: 0.4913184017000001 ms
+Optimal block size: 1024, time: 0.4913184017000001 ms
 ========================================
 Naive scan, non-power-of-two
-Block size: 8, time: 6.208518411000001 ms
-Block size: 16, time: 3.1698239809999995 ms
-Block size: 32, time: 1.650400006 ms
-Block size: 64, time: 0.8862239956 ms
-Block size: 128, time: 0.5067872018 ms
-Block size: 256, time: 0.3504383981 ms
-Block size: 512, time: 0.346905601 ms
-Block size: 1024, time: 0.4155999988 ms
-Optimal block size: 512, time: 0.346905601 ms
+Block size: 8, time: 6.197379209 ms
+Block size: 16, time: 3.1488416440000004 ms
+Block size: 32, time: 1.6155263910000002 ms
+Block size: 64, time: 0.8565600038000001 ms
+Block size: 128, time: 0.5647936076 ms
+Block size: 256, time: 0.45924159600000003 ms
+Block size: 512, time: 0.5508479952 ms
+Block size: 1024, time: 0.4998720078999999 ms
+Optimal block size: 256, time: 0.45924159600000003 ms
 ========================================
 Work-efficient scan, power-of-two
-Block size: 8, time: 0.9049055992999999 ms
-Block size: 16, time: 0.7210080087999999 ms
-Block size: 32, time: 0.6597408055 ms
-Block size: 64, time: 0.5313376009999999 ms
-Block size: 128, time: 0.6298431963000001 ms
-Block size: 256, time: 0.6812607945 ms
-Block size: 512, time: 0.5833792001 ms
-Block size: 1024, time: 0.6668896109 ms
-Optimal block size: 64, time: 0.5313376009999999 ms
+Block size: 8, time: 1.2334048075 ms
+Block size: 16, time: 0.9746495964999999 ms
+Block size: 32, time: 1.0865504112999997 ms
+Block size: 64, time: 0.7621375807999999 ms
+Block size: 128, time: 0.8848479986000001 ms
+Block size: 256, time: 0.7751007915 ms
+Block size: 512, time: 1.2780031998999999 ms
+Block size: 1024, time: 0.9169344123000001 ms
+Optimal block size: 64, time: 0.7621375807999999 ms
 ========================================
 Work-efficient scan, non-power-of-two
-Block size: 8, time: 0.9357727944 ms
-Block size: 16, time: 0.7128639936000001 ms
-Block size: 32, time: 0.7185056090999999 ms
-Block size: 64, time: 0.5883967997000001 ms
-Block size: 128, time: 0.5995808003 ms
-Block size: 256, time: 0.6008256017000001 ms
-Block size: 512, time: 0.6760576010000001 ms
-Block size: 1024, time: 0.5939391851 ms
-Optimal block size: 64, time: 0.5883967997000001 ms
+Block size: 8, time: 1.6846079939999998 ms
+Block size: 16, time: 1.1247648052 ms
+Block size: 32, time: 0.9946559961999999 ms
+Block size: 64, time: 1.1106271928 ms
+Block size: 128, time: 0.7899712115 ms
+Block size: 256, time: 0.8548672105999999 ms
+Block size: 512, time: 0.8211200056000001 ms
+Block size: 1024, time: 0.3766912013 ms
+Optimal block size: 1024, time: 0.3766912013 ms
 ========================================
 Work-efficient compact, power-of-two
-Block size: 8, time: 1.417711996 ms
-Block size: 16, time: 0.9495487984000001 ms
-Block size: 32, time: 0.7181632041999999 ms
-Block size: 64, time: 0.6332575947 ms
-Block size: 128, time: 0.6355327934999999 ms
-Block size: 256, time: 0.577478391 ms
-Block size: 512, time: 0.7434591980000002 ms
-Block size: 1024, time: 0.6726783932 ms
-Optimal block size: 256, time: 0.577478391 ms
+Block size: 8, time: 1.320752002 ms
+Block size: 16, time: 0.9775711956 ms
+Block size: 32, time: 0.9180895992 ms
+Block size: 64, time: 1.2212512094 ms
+Block size: 128, time: 0.8028352011 ms
+Block size: 256, time: 1.337366404 ms
+Block size: 512, time: 1.0536224006 ms
+Block size: 1024, time: 0.9021439969000001 ms
+Optimal block size: 128, time: 0.8028352011 ms
 ========================================
 Work-efficient compact, non-power-of-two
-Block size: 8, time: 1.423475218 ms
-Block size: 16, time: 0.9857856036999998 ms
-Block size: 32, time: 0.8006624043 ms
-Block size: 64, time: 0.5751327993 ms
-Block size: 128, time: 0.6924479992 ms
-Block size: 256, time: 0.5636575996 ms
-Block size: 512, time: 0.6784191968000001 ms
-Block size: 1024, time: 0.6932192027999999 ms
-Optimal block size: 256, time: 0.5636575996 ms
+Block size: 8, time: 1.819353578 ms
+Block size: 16, time: 1.3313984046000003 ms
+Block size: 32, time: 1.2955423931000003 ms
+Block size: 64, time: 1.0542688068000001 ms
+Block size: 128, time: 1.2601408064000004 ms
+Block size: 256, time: 1.2192768095 ms
+Block size: 512, time: 1.1920671929000002 ms
+Block size: 1024, time: 1.3155871931 ms
+Optimal block size: 64, time: 1.0542688068000001 ms
 ========================================
 Work-efficient plus scan, power-of-two
-Block size: 8, elements per thread: 1, time: 0.5458272011 ms
-Block size: 8, elements per thread: 2, time: 0.3792447983 ms
-Block size: 8, elements per thread: 4, time: 0.3159423963 ms
-Block size: 8, elements per thread: 8, time: 0.3622208059 ms
-Block size: 8, elements per thread: 16, time: 0.4684351951 ms
-Block size: 16, elements per thread: 1, time: 0.2957440004 ms
-Block size: 16, elements per thread: 2, time: 0.2765696033999999 ms
-Block size: 16, elements per thread: 4, time: 0.3591648042 ms
-Block size: 16, elements per thread: 8, time: 0.3541247966 ms
-Block size: 16, elements per thread: 16, time: 0.4408064038 ms
-Block size: 32, elements per thread: 1, time: 0.2547711969 ms
-Block size: 32, elements per thread: 2, time: 0.2487744019 ms
-Block size: 32, elements per thread: 4, time: 0.2829280005 ms
-Block size: 32, elements per thread: 8, time: 0.355180803 ms
-Block size: 32, elements per thread: 16, time: 0.4990495979999999 ms
-Block size: 64, elements per thread: 1, time: 0.21321919859999997 ms
-Block size: 64, elements per thread: 2, time: 0.23418560179999998 ms
-Block size: 64, elements per thread: 4, time: 0.26373759820000003 ms
-Block size: 64, elements per thread: 8, time: 0.3173408001 ms
-Block size: 64, elements per thread: 16, time: 0.45957120059999995 ms
-Block size: 128, elements per thread: 1, time: 0.2471552 ms
-Block size: 128, elements per thread: 2, time: 0.21002880040000002 ms
-Block size: 128, elements per thread: 4, time: 0.2764960006 ms
-Block size: 128, elements per thread: 8, time: 0.3514591991999999 ms
-Block size: 128, elements per thread: 16, time: 0.49059520079999996 ms
-Block size: 256, elements per thread: 1, time: 0.19113280039999997 ms
-Block size: 256, elements per thread: 2, time: 0.2154880017 ms
-Block size: 256, elements per thread: 4, time: 0.2787679984 ms
-Block size: 256, elements per thread: 8, time: 0.3731999963 ms
-Block size: 256, elements per thread: 16, time: 0.49939519470000004 ms
-Block size: 512, elements per thread: 1, time: 0.20608639850000002 ms
-Block size: 512, elements per thread: 2, time: 0.2563392014 ms
-Block size: 512, elements per thread: 4, time: 0.3583200006 ms
-Block size: 512, elements per thread: 8, time: 0.3594367981 ms
+Block size: 8, elements per thread: 1, time: 0.35677120390000006 ms
+Block size: 8, elements per thread: 2, time: 0.2461855993 ms
+Block size: 8, elements per thread: 4, time: 0.20586879839999997 ms
+Block size: 8, elements per thread: 8, time: 0.2564895988 ms
+Block size: 8, elements per thread: 16, time: 0.29693120419999997 ms
+Block size: 16, elements per thread: 1, time: 0.2679104015 ms
+Block size: 16, elements per thread: 2, time: 0.152214399 ms
+Block size: 16, elements per thread: 4, time: 0.199580802 ms
+Block size: 16, elements per thread: 8, time: 0.2125504002 ms
+Block size: 16, elements per thread: 16, time: 0.2828671993 ms
+Block size: 32, elements per thread: 1, time: 0.16852159649999998 ms
+Block size: 32, elements per thread: 2, time: 0.1681056015 ms
+Block size: 32, elements per thread: 4, time: 0.1758399994 ms
+Block size: 32, elements per thread: 8, time: 0.21814079869999997 ms
+Block size: 32, elements per thread: 16, time: 0.3729472012 ms
+Block size: 64, elements per thread: 1, time: 0.16515839977999996 ms
+Block size: 64, elements per thread: 2, time: 0.15373440083 ms
+Block size: 64, elements per thread: 4, time: 0.1847008006 ms
+Block size: 64, elements per thread: 8, time: 0.22609280039999996 ms
+Block size: 64, elements per thread: 16, time: 0.3613759995 ms
+Block size: 128, elements per thread: 1, time: 0.13827199933000003 ms
+Block size: 128, elements per thread: 2, time: 0.12009920111999998 ms
+Block size: 128, elements per thread: 4, time: 0.23142399940000002 ms
+Block size: 128, elements per thread: 8, time: 0.2426623969 ms
+Block size: 128, elements per thread: 16, time: 0.3689568042 ms
+Block size: 256, elements per thread: 1, time: 0.1315040014 ms
+Block size: 256, elements per thread: 2, time: 0.14512320169999998 ms
+Block size: 256, elements per thread: 4, time: 0.1842624008 ms
+Block size: 256, elements per thread: 8, time: 0.24464000160000002 ms
+Block size: 256, elements per thread: 16, time: 0.36462400240000004 ms
+Block size: 512, elements per thread: 1, time: 0.14869759980000002 ms
+Block size: 512, elements per thread: 2, time: 0.1295744002 ms
+Block size: 512, elements per thread: 4, time: 0.19439359899999997 ms
+Block size: 512, elements per thread: 8, time: 0.2625504031 ms
 Block size: 512, elements per thread: 16 - crashed
-Block size: 1024, elements per thread: 1, time: 0.234352003 ms
-Block size: 1024, elements per thread: 2, time: 0.25858239680000006 ms
-Block size: 1024, elements per thread: 4, time: 0.3363999992000001 ms
+Block size: 1024, elements per thread: 1, time: 0.12309759919999999 ms
+Block size: 1024, elements per thread: 2, time: 0.1486623989 ms
+Block size: 1024, elements per thread: 4, time: 0.2266975983 ms
 Block size: 1024, elements per thread: 8 - crashed
 Block size: 1024, elements per thread: 16 - crashed
-Optimal config: block size 256, elements per thread 1, time: 0.19113280039999997 ms
+Optimal config: block size 128, elements per thread 2, time: 0.12009920111999998 ms
 ========================================
 Work-efficient plus scan, non-power-of-two
-Block size: 8, elements per thread: 1, time: 0.4914176017 ms
-Block size: 8, elements per thread: 2, time: 0.32388479719999996 ms
-Block size: 8, elements per thread: 4, time: 0.38091839839999997 ms
-Block size: 8, elements per thread: 8, time: 0.33217279899999996 ms
-Block size: 8, elements per thread: 16, time: 0.39384639860000004 ms
-Block size: 16, elements per thread: 1, time: 0.3107008011 ms
-Block size: 16, elements per thread: 2, time: 0.2454912007 ms
-Block size: 16, elements per thread: 4, time: 0.3092735976 ms
-Block size: 16, elements per thread: 8, time: 0.32160959829999997 ms
-Block size: 16, elements per thread: 16, time: 0.42109759750000003 ms
-Block size: 32, elements per thread: 1, time: 0.26428479559999996 ms
-Block size: 32, elements per thread: 2, time: 0.25905919679999995 ms
-Block size: 32, elements per thread: 4, time: 0.3214975982 ms
-Block size: 32, elements per thread: 8, time: 0.3603167982 ms
-Block size: 32, elements per thread: 16, time: 0.4624383956 ms
-Block size: 64, elements per thread: 1, time: 0.20346560030000002 ms
-Block size: 64, elements per thread: 2, time: 0.2914719998 ms
-Block size: 64, elements per thread: 4, time: 0.29802560209999995 ms
-Block size: 64, elements per thread: 8, time: 0.3288128018 ms
-Block size: 64, elements per thread: 16, time: 0.449561593 ms
-Block size: 128, elements per thread: 1, time: 0.20832960009999998 ms
-Block size: 128, elements per thread: 2, time: 0.24085119969999996 ms
-Block size: 128, elements per thread: 4, time: 0.2845311985 ms
-Block size: 128, elements per thread: 8, time: 0.3271040023 ms
-Block size: 128, elements per thread: 16, time: 0.46438719919999993 ms
-Block size: 256, elements per thread: 1, time: 0.1988800004 ms
-Block size: 256, elements per thread: 2, time: 0.24773760570000003 ms
-Block size: 256, elements per thread: 4, time: 0.3005983978 ms
-Block size: 256, elements per thread: 8, time: 0.3462976009 ms
-Block size: 256, elements per thread: 16, time: 0.48608960519999994 ms
-Block size: 512, elements per thread: 1, time: 0.2411488013 ms
-Block size: 512, elements per thread: 2, time: 0.2356735976 ms
-Block size: 512, elements per thread: 4, time: 0.31453439899999996 ms
-Block size: 512, elements per thread: 8, time: 0.36263679849999997 ms
+Block size: 8, elements per thread: 1, time: 0.3583456037 ms
+Block size: 8, elements per thread: 2, time: 0.25230080190000004 ms
+Block size: 8, elements per thread: 4, time: 0.21565439989999996 ms
+Block size: 8, elements per thread: 8, time: 0.24966079579999997 ms
+Block size: 8, elements per thread: 16, time: 0.29572479430000004 ms
+Block size: 16, elements per thread: 1, time: 0.2169760003 ms
+Block size: 16, elements per thread: 2, time: 0.1610751987 ms
+Block size: 16, elements per thread: 4, time: 0.1980544014 ms
+Block size: 16, elements per thread: 8, time: 0.21126080009999998 ms
+Block size: 16, elements per thread: 16, time: 0.2852992027 ms
+Block size: 32, elements per thread: 1, time: 0.1461216008 ms
+Block size: 32, elements per thread: 2, time: 0.15881919949999998 ms
+Block size: 32, elements per thread: 4, time: 0.1823200002 ms
+Block size: 32, elements per thread: 8, time: 0.2195231989 ms
+Block size: 32, elements per thread: 16, time: 0.376639995 ms
+Block size: 64, elements per thread: 1, time: 0.15102400022 ms
+Block size: 64, elements per thread: 2, time: 0.13811200266 ms
+Block size: 64, elements per thread: 4, time: 0.1730176017 ms
+Block size: 64, elements per thread: 8, time: 0.217846398 ms
+Block size: 64, elements per thread: 16, time: 0.3569279999 ms
+Block size: 128, elements per thread: 1, time: 0.14728640024 ms
+Block size: 128, elements per thread: 2, time: 0.13456960240000002 ms
+Block size: 128, elements per thread: 4, time: 0.1838400023 ms
+Block size: 128, elements per thread: 8, time: 0.2354975983 ms
+Block size: 128, elements per thread: 16, time: 0.35950399940000005 ms
+Block size: 256, elements per thread: 1, time: 0.11884800039000001 ms
+Block size: 256, elements per thread: 2, time: 0.12683519940000001 ms
+Block size: 256, elements per thread: 4, time: 0.1796159998 ms
+Block size: 256, elements per thread: 8, time: 0.2481792004 ms
+Block size: 256, elements per thread: 16, time: 0.3609760016 ms
+Block size: 512, elements per thread: 1, time: 0.11134720002000001 ms
+Block size: 512, elements per thread: 2, time: 0.11812160169 ms
+Block size: 512, elements per thread: 4, time: 0.2151135998 ms
+Block size: 512, elements per thread: 8, time: 0.258998403 ms
 Block size: 512, elements per thread: 16 - crashed
-Block size: 1024, elements per thread: 1, time: 0.2502848000000001 ms
-Block size: 1024, elements per thread: 2, time: 0.25420480219999997 ms
-Block size: 1024, elements per thread: 4, time: 0.3396863997 ms
+Block size: 1024, elements per thread: 1, time: 0.11879039996999999 ms
+Block size: 1024, elements per thread: 2, time: 0.15765759950000002 ms
+Block size: 1024, elements per thread: 4, time: 0.22839040019999998 ms
 Block size: 1024, elements per thread: 8 - crashed
 Block size: 1024, elements per thread: 16 - crashed
-Optimal config: block size 256, elements per thread 1, time: 0.1988800004 ms
+Optimal config: block size 512, elements per thread 1, time: 0.11134720002000001 ms
 ```
